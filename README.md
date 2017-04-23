@@ -31,5 +31,6 @@ Clone this repository.
 
 #ifndef WIFI_PASSWORD
 #define WIFI_PASSWORD "network WPA2 password"
-#endif```
+#endif
+```
 * Upload to board.
