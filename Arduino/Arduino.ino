@@ -6,6 +6,10 @@
 
 #define ESP8266
 
+#include <StaticThreadController.h>
+#include <Thread.h>
+#include <ThreadController.h>
+
 #include <SPI.h>
 #include <Adafruit_GFX.h>
 #include <Adafruit_PCD8544.h>
@@ -14,7 +18,9 @@
 #include <ESP8266WiFi.h>
 #include "WifiConfig.h"
 
-#include <SocketIOClient.h>
+#include "SocketIOClient.h"
+
+#include <Adafruit_NeoPixel.h>
 
 // ----
 // Begin of user configuration
@@ -25,7 +31,7 @@ const char* ssid = WIFI_SSID;
 const char* password = WIFI_PASSWORD;
 
 // Server address and port
-char server[] = "192.168.1.115";
+char server[] = "192.168.178.34";
 int port = 3000;
 
 // Nickname for this player
@@ -47,22 +53,35 @@ String nickname = "ThzD";
 // so there aren't included in the arguments
 Adafruit_PCD8544 display = Adafruit_PCD8544(D6, D1, D2);
 
+// SocketIO library
 SocketIOClient socket;
 extern String RID;
 extern String Rname;
 extern String Rcontent;
 
-unsigned long lastCheck = 0;
-long interval = 1000;
-
+// Variables for global timing
 unsigned long lastPing = 0;
 long pingInterval = 25000;
+
+// LED strip control
+Adafruit_NeoPixel strip = Adafruit_NeoPixel(10, D4, NEO_GRB + NEO_KHZ800);
+uint16_t ledI, ledJ;
+
+// Threads
+Thread* thread_socketHandler;
+Thread* thread_ledController;
+
+ThreadController threadController;
 
 void setup() {
   Serial.begin(115200);
   delay(10);
 
   Serial.println("");
+
+  Serial.println("Initializing LED strip");
+  strip.begin();
+  strip.show();
 
   Serial.println("Initializing screen.");
 
@@ -76,8 +95,7 @@ void setup() {
 
   // Show connecting to WiFi status on LCD.
   showPopup("Connecting WiFi...", ssid);
-  
-
+ 
   // Kindly ask ESP8266 to connect to WiFi
   WiFi.mode(WIFI_STA);
   WiFi.begin(ssid, password);
@@ -113,33 +131,24 @@ void setup() {
     display.display();
     gameInit();
   }
+
+  // Set up threads
+  thread_socketHandler = new Thread();
+  thread_socketHandler->enabled = true;
+  thread_socketHandler->setInterval(100);
+  thread_socketHandler->onRun(socketHandler);
+
+  thread_ledController = new Thread();
+  thread_ledController->enabled = true;
+  thread_ledController->setInterval(25);
+  thread_ledController->onRun(ledController);
+
+  // Set up thread controller
+  threadController = ThreadController();
+  threadController.add(thread_socketHandler);
+  threadController.add(thread_ledController);
 }
 
 void loop() {
-  // If connection is dead, reconnect.
-  if (!socket.connected()) {
-    
-    showPopup("Reconnecting", "The server connection was lost. Trying to restore...");
-    
-    socket.reconnect(server, port);
-    delay(2000);
-    gameInit();
-    
-  } else { // Connection is alive.
-
-    if (millis() - lastPing > pingInterval) {
-      // Send heartbeat to keep connection alive even if no data is being exchanged.
-      socket.heartbeat(0);
-    }
-
-    // If it has been a certain time since last check, check if message are received from
-    // Socket.io server.
-    if (millis() - lastCheck > interval) {
-      lastCheck = millis();
-      
-      if (socket.monitor()) {
-        
-      }
-    }
-  }
+  threadController.run();
 }

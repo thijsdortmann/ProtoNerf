@@ -9,11 +9,15 @@ void showPopup(String title, String message) {
   display.setCursor(5, 7);
   display.print(title);
   
-  display.drawRect(0, 10, 84, 38, BLACK);
-  display.setCursor(5, 17);
+  display.setCursor(0, 17);
   display.print(message);
   
   display.display();
 }
 
+void showGameMain() {
+  display.clearDisplay();
+
+  display.display();
+}
 
