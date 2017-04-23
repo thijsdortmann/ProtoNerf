@@ -25,7 +25,7 @@ const char* ssid = WIFI_SSID;
 const char* password = WIFI_PASSWORD;
 
 // Server address and port
-char server[] = "192.168.178.34";
+char server[] = "192.168.1.115";
 int port = 3000;
 
 // Nickname for this player
@@ -54,6 +54,9 @@ extern String Rcontent;
 
 unsigned long lastCheck = 0;
 long interval = 1000;
+
+unsigned long lastPing = 0;
+long pingInterval = 25000;
 
 void setup() {
   Serial.begin(115200);
@@ -108,6 +111,7 @@ void setup() {
   if (socket.connected()) {
     display.println("Connected to server");
     display.display();
+    gameInit();
   }
 }
 
@@ -115,26 +119,26 @@ void loop() {
   // If connection is dead, reconnect.
   if (!socket.connected()) {
     
-    display.clearDisplay();
-    display.println("Reconnecting");
-    display.display();
+    showPopup("Reconnecting", "The server connection was lost. Trying to restore...");
+    
     socket.reconnect(server, port);
     delay(2000);
+    gameInit();
     
   } else { // Connection is alive.
+
+    if (millis() - lastPing > pingInterval) {
+      // Send heartbeat to keep connection alive even if no data is being exchanged.
+      socket.heartbeat(0);
+    }
 
     // If it has been a certain time since last check, check if message are received from
     // Socket.io server.
     if (millis() - lastCheck > interval) {
       lastCheck = millis();
-
-      // Send heartbeat to keep connection alive even if no data is being exchanged.
-      socket.heartbeat(0);
       
       if (socket.monitor()) {
-        display.clearDisplay();
-        display.println(Rcontent);
-        display.display();
+        
       }
     }
   }

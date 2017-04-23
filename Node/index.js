@@ -1,4 +1,3 @@
-/* eslint-disable no-console */
 var app = require('http').createServer(handler)
 var io = require('socket.io')(app);
 
@@ -10,6 +9,12 @@ function handler(req, res) {
 }
 
 io.on('connection', function(socket) {
+    var nick = 0;
+
     console.log('client connected');
-    socket.emit('hi there', 'we\'re connected!');
+    socket.emit('hello', '');
+    socket.on('nick', function(data) {
+        console.log("user identified as:", data);
+        nick = data;
+    })
 });
