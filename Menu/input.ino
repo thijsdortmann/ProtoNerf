@@ -1,3 +1,6 @@
+//whatever
+
+//TOUCH NOTHING HERE UNLESS YOU UNDERSTAND THE THINKING PROCESS
 boolean buttonPressed(uint8_t buttonPin) {
   //Serial.println(digitalRead(buttonPin));
   if (!digitalRead(buttonPin)) {

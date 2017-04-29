@@ -1,6 +1,13 @@
 #include <SPI.h>
 #include <Adafruit_GFX.h>
 #include <Adafruit_PCD8544.h>
+#include <Adafruit_NeoPixel.h>
+#include <EEPROM.h>
+
+#include "MenuItem.h"
+#ifdef __AVR__
+#include <avr/power.h>
+#endif
 
 // These pins are used for the Nokia 5110 LCD:
 // D5 - Serial clock out (SCLK)
@@ -13,38 +20,61 @@
 // We're using hardware SPI (where SCLK and DIN are always on D5 and D7),
 // so there aren't included in the arguments
 
-Adafruit_PCD8544 display = Adafruit_PCD8544(D6, D1, D2);
-
-
-
-#define NUMFLAKES 10
-#define XPOS 0
-#define YPOS 1
-#define DELTAY 2
-
-
-#define LOGO16_GLCD_HEIGHT 16
-#define LOGO16_GLCD_WIDTH  16
-
-//END OF DISPLAY SETTINGS
 //NON VARIABLES, CHANGE THESE TO FIT WEMOS
 
 #define TRIGGERBUTTON     A0
 #define LOGICBUTTON       D3
 #define BACKLIGHT         RX
 #define SIGHTLED          D8
+#define LEDSTRIP          D4
+#define RELAY             D0
 
+//IDENTIFIERS
 #define LONGCLICK         3
 #define SINGLECLICK       1
 #define DOUBLECLICK       2
+
+//BEHAVIOUR
 #define DEBOUNCE          50
 #define SCROLLSPEED       50
 
+//GUN PARAMETERS
+
+#define MAXBULLETS        20
+#define LEDSTRIPLENGTH    10
+
+Adafruit_PCD8544 display = Adafruit_PCD8544(D6, D1, D2);
+
+Adafruit_NeoPixel ledStrip = Adafruit_NeoPixel(LEDSTRIPLENGTH, LEDSTRIP, NEO_GRB + NEO_KHZ800);
+
+#define NUMFLAKES 10
+#define XPOS      0
+#define YPOS      1
+#define DELTAY    2
+
+
+#define LOGO16_GLCD_HEIGHT 16
+#define LOGO16_GLCD_WIDTH  16
+
+//END OF DISPLAY SETTINGS
+
 String IP = "192.168.55.6";
+String gunName = "ZF-1";
+
+uint8_t GENERALBRIGHTNESS = 255;
+uint8_t ledStripColor[] = {0, 0, 0};
+uint8_t teamColor[] = {0, 0, 0};
+
+String role;
+String broadCastMessage;
+
+//EEPROM adresses
+int colorAdress = 0;
+int brightnessAdress;
+#define NEWCOLOR    1;
 
 //logic variables
-int bullets = 20;
-String broadCastMessage;
+int bullets = MAXBULLETS;
 int menuLength = 0;
 int cursorLocation = 0;
 int menuLocation = 0;
@@ -52,6 +82,7 @@ int ledBrightness = 125;
 boolean sightLedOn  = true;
 int backLightBrightness = 255;
 boolean backLightOn = true;
+boolean hasRole = true;
 
 boolean broadcast = false;
 boolean menu = false;
@@ -66,15 +97,45 @@ boolean allowColorCustomization = true;
 void setup() {
   // put your setup code here, to run once:
   Serial.begin(9600);
+  ledStrip.begin();
   broadCastMessage = "";
+  role = "TRAITOR";
 
-  pinMode(TRIGGERBUTTON, INPUT);
+  brightnessAdress = colorAdress + 4;
+
+  EEPROM.begin(128);
+  if (EEPROM.read(colorAdress) == 0) {
+    for (int i = 0; i < 3; i++) {
+      EEPROM.write(i + (colorAdress + 1), ledStripColor[i]);
+    }
+    EEPROM.write(brightnessAdress, ledBrightness);
+    EEPROM.write(brightnessAdress + 1, backLightBrightness);
+    EEPROM.write(brightnessAdress + 2, sightLedOn ? 1 : 0);
+    EEPROM.write(brightnessAdress + 3, backLightOn ? 1 : 0);
+  }
+  EEPROM.write(colorAdress, 1);
+  EEPROM.commit();
+
+  for (int i = 0; i < 3; i++) {
+    ledStripColor[i] = EEPROM.read(colorAdress + i + 1);
+  }
+  ledBrightness = EEPROM.read(brightnessAdress);
+  backLightBrightness = EEPROM.read(brightnessAdress + 1);
+  sightLedOn = EEPROM.read(brightnessAdress + 2) == 1 ? true : false;
+  backLightOn = EEPROM.read(brightnessAdress + 3) == 1 ? true : false;
+  //sightLedOn = EEPROM.read(brightnessAdress + 2);
+  //backLightOn = EEPROM.read(brightnessAdress + 3);
+
+  pinMode(TRIGGERBUTTON, INPUT_PULLUP);
   pinMode(LOGICBUTTON, INPUT_PULLUP);
 
   pinMode(BACKLIGHT, OUTPUT);
-  digitalWrite(BACKLIGHT, HIGH);
+  analogWrite(BACKLIGHT, backLightBrightness);
   pinMode(SIGHTLED, OUTPUT);
   analogWrite(SIGHTLED, ledBrightness);
+
+  //initialize the ledstrip
+   initializeStrip();
 
   display.begin();
   // init done
@@ -107,13 +168,13 @@ int DOUBLECLICKTIME = 250;
 long timeOutTimer = millis();
 long TimeSinceLast = millis();
 
-#define MAINMENU      1
-#define IPMENU        2
-#define LEDMENU       3
-#define COLORMENU     4
-
-#define TEXTSIZE 10
-#define OFFSET 15
+//#define MAINMENU      1
+//#define IPMENU        2
+//#define LEDMENU       3
+//#define COLORMENU     4
+//
+//#define TEXTSIZE 10
+//#define OFFSET 15
 
 int clickCounter = 0;
 
@@ -123,9 +184,6 @@ void displayScreen() {
   if (p == SINGLECLICK) {
     clickCounter++;
   }
-  //Serial.print(p);
-  //Serial.print("  ");
-  //Serial.println(clickCounter);
 
   if (broadcast) {
     if (buttonPressed(LOGICBUTTON) || millis() > timeOutTimer + TIMEOUTTIME) {
@@ -135,33 +193,7 @@ void displayScreen() {
     }
   }
   else if (menu) {
-    //p is input, gives either a long press, or a short press
-    //do something menu related
-   // Serial.println(menuLocation);
-    switch (menuLocation) {
-      case IPMENU:
-      //show IP
-      ipMenu(p);
-      break;
-      case LEDMENU:
-        //do led
-        ledMenu(p);
-        break;
-      case COLORMENU:
-        //do colorwheel
-        colorMenu(p);
-        break;
-      default:
-        mainMenu(p);
-        break;
-    }
-
-    //timeout timer, don't touch
-    if (p != 0) {
-      timeOutTimer = millis();
-    } else if (millis() > timeOutTimer + TIMEOUTTIME) {
-      leaveMenu();
-    }
+    handleMenu(p);
   } else {
     ammoCounter();
 
@@ -170,179 +202,44 @@ void displayScreen() {
     if (bullets < 10) {
       display.setCursor(29, 10);
     } else {
-    display.setCursor(14, 10);
+      display.setCursor(14, 10);
     }
     display.println(bullets);
-    
+
     display.setCursor(27, 0);
     display.setTextSize(1);
     //Change this for the actual timer
     if (gameHasTimer) {
-    display.println(timeLeft());
+      display.println(timeLeft());
     } else {
-    display.println("07:29");
+      display.println("07:29");
     }
     //button controls:
     if (p == SINGLECLICK) {
       boolean isReload = false;
-      if (millis() < TimeSinceLast + DOUBLECLICKTIME) { 
+      if (millis() < TimeSinceLast + DOUBLECLICKTIME) {
         //reload the gun if that is possible
         if (allowReloads) {
           reload();
-          TimeSinceLast = millis() -DOUBLECLICKTIME;
+          TimeSinceLast = millis() - DOUBLECLICKTIME;
           isReload = true;
         }
       } else {
         bullets --;
       }
-       if (!isReload) {
-      TimeSinceLast = millis();
-       }
-      
+      if (!isReload) {
+        TimeSinceLast = millis();
+      }
+
 
     } else if (p == LONGCLICK) {
-      goToMenu(MAINMENU);
+      goToMenu(1);
     }
   }
 
   display.display();
 }
-void drawSelector(uint8_t loc, int startLocation) {
-  //show a triangle
-  int yPos = (loc * TEXTSIZE) + startLocation + 3;
-  display.fillTriangle(0, yPos - 3, 6, yPos, 0, yPos + 3, 255);
-}
-#define NORMALLENGTH    3
-void mainMenu(uint8_t input) {
-  menuLength = NORMALLENGTH;
-  int offSet = 0;
-  display.setTextSize(1);
-  display.setTextColor(BLACK);
-  display.setCursor(10, 0);
-  //display.print("ip: ");
-  display.print("SETTINGS");
-  display.setCursor(10, TEXTSIZE);
-  display.println("BRIGHTNESS");
-  if (allowColorCustomization) {
-    menuLength ++;
-    offSet += TEXTSIZE;
-    display.setCursor(10, TEXTSIZE * 2);
-    display.println("COLOR");
-  }
-  display.setCursor(10, TEXTSIZE * 2 + offSet);
-  display.println("<- BACK");
 
-  handleCursor(input, menuLength);
-  if (input == LONGCLICK) {
-    if (cursorLocation == menuLength-1) {
-      leaveMenu();
-    } else {
-    goToMenu(cursorLocation+2);
-      }
-    }
-  // Serial.println(cursorLocation);
-  drawSelector(cursorLocation, 0);
-}
-
-void ipMenu(uint8_t input) {
-  display.setTextSize(1);
-  display.setCursor(10, 0);
-  display.print("IP ADRESS:");
-  display.setCursor(10, TEXTSIZE);
-  display.print(IP);
-  display.setCursor(10, TEXTSIZE * 2);
-  display.print("<- BACK");
-
-  handleCursor(input, 1);
-  drawSelector(cursorLocation, TEXTSIZE * 2);
-
-  if (input == LONGCLICK) {
-    goToMenu(MAINMENU);
-  }
-}
-long ledTimer = millis();
-
-void ledMenu(uint8_t input) {
-  display.setTextSize(1);
-  display.setCursor(10, 0);
-  display.print("SIGHT:  ");
-  display.print(ledBrightness);
-  display.setCursor(10, TEXTSIZE);
-  display.print(sightLedOn ? "ON" : "OFF");
-  display.setCursor(10, TEXTSIZE * 2);
-  display.print("Screen: ");
-  display.print(backLightBrightness);
-  display.setCursor(10, TEXTSIZE * 3);
-  display.print(backLightOn ? "ON" : "OFF");
-  display.setCursor(10, TEXTSIZE * 4);
-  display.print("<- BACK");
-
-  handleCursor(input, 5);
-  drawSelector(cursorLocation, 0);
-
-  if (input == LONGCLICK) {
-    if (cursorLocation == 0) {
-      if (millis() > ledTimer + SCROLLSPEED * 3) {
-        ledBrightness+=5;
-        ledBrightness %= 255;
-        ledTimer = millis();
-      }
-    } else if (cursorLocation == 1) {
-      sightLedOn = !sightLedOn;
-      resetButton();
-    } else if (cursorLocation == 2) {
-      if (millis() > ledTimer + SCROLLSPEED * 3) {
-        backLightBrightness+= 5;
-        backLightBrightness %= 255;
-        ledTimer = millis();
-      }
-    } else if (cursorLocation == 3) {
-        backLightOn = !backLightOn;
-        resetButton();
-      } else if (cursorLocation == 4) {
-        goToMenu(MAINMENU);
-      }
-  }
-}
-
-String primaries[] = {"RED  ", "GREEN", "BLUE "};
-int ledStripColor[] = {0, 0, 0};
-#define COLORMENULENGTH   4
-long colorTimer = millis();
-
-void colorMenu(uint8_t input) {
-  display.setTextSize(1);
-  for (int i = 0; i < 3; i++) {
-    int yPos = 0 + TEXTSIZE * i;
-    display.setCursor(10, yPos);
-    display.print(primaries[i]);
-    display.print(" ");
-    display.print(ledStripColor[i]);
-  }
-  display.setCursor(10, TEXTSIZE * 3);
-  display.println("<- BACK");
-
-  handleCursor(input, COLORMENULENGTH);
-  drawSelector(cursorLocation, 0);
-  if (input == LONGCLICK) {
-    if (cursorLocation < 3) {
-      if (millis() > colorTimer + SCROLLSPEED) {
-        ledStripColor[cursorLocation]++;
-        ledStripColor[cursorLocation] %= 255;
-        colorTimer = millis();
-      }
-    } else {
-      goToMenu(MAINMENU);
-    }
-  }
-}
-void handleCursor(int input, int menuLength) {
-  if (input == SINGLECLICK) {
-    // Serial.println("singleClick spotted");
-    cursorLocation++;
-    cursorLocation = cursorLocation % menuLength;
-  }
-}
 
 void showBroadcast(String message) {
   //show message on screen
@@ -350,22 +247,12 @@ void showBroadcast(String message) {
   //set timeOutTimer, after 10 seconds it will disappear
   timeOutTimer = millis();
 }
-void goToMenu(int location) {
-  timeOutTimer = millis();
-  menu = true;
-  menuLocation = location;
-  resetButton();
-  cursorLocation = 0;
-  //Serial.println(location);
-}
-void leaveMenu() {
-  resetButton();
-  menu = false;
-}
 
 void reload() {
-  bullets = 20;
+  bullets = MAXBULLETS;
 }
+
+
 void handleLights() {
   //lights of the sight
   if (sightLedOn) {
@@ -381,11 +268,14 @@ void handleLights() {
   //backLight
 
   //do the ledstrip
+  prepareStrip(); //keeps the strip updated, doesn not require much memory
+  showStrip();    //shows the strip with the current values
+
+  //OTHER FUNCTIONS THAT ARE POSSIBLE
+  //setBrightness(index, brightness); //works for each individual pixel
+  //setColor(index, red, green, blue); //works for each individual pixel
 }
 
-void drawAmmoCounter() {
-
-}
 
 
 

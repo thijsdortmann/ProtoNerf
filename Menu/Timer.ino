@@ -1,3 +1,4 @@
+//very stable timer, returns as an integer 
 int minutes = 0;
 int seconds = 0;
 long timeCounter = millis();
@@ -32,5 +33,9 @@ void startTimer(uint8_t mins, uint8_t secs) {
   minutes = mins;
   seconds = secs;
   timeCounter = millis();
+}
+//returns the amount of time left in seconds
+int getTimeLeft() {
+  return (minutes * 60) + seconds;
 }
 
