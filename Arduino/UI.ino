@@ -9,7 +9,7 @@ void showBroadcast(String title, String message) {
   display.setTextColor(BLACK);
 
   display.drawRect(0, 0, 84, 10, BLACK);
-  display.setCursor(0, 7);
+  display.setCursor(1, 7);
   display.print(title);
   
   display.setCursor(0, 17);
@@ -28,7 +28,7 @@ void showMessage(String title, String message) {
   display.setTextColor(BLACK);
 
   display.drawRect(0, 0, 84, 10, BLACK);
-  display.setCursor(0, 7);
+  display.setCursor(1, 7);
   display.print(title);
   
   display.setCursor(0, 17);

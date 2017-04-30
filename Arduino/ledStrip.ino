@@ -34,9 +34,9 @@ void showStrip() {
 //only has to be called once
 void initializeStrip() {
   prepareStrip();
-  for (int i = 0; i < LEDSTRIPLENGTH; i++) {
+  /*for (int i = 0; i < LEDSTRIPLENGTH; i++) {
     calcBrightness(i);
-  }
+  }*/
 }
 /**
  * Calculates the brightness of each individual pixel based on mapping
@@ -60,17 +60,23 @@ void calcBrightness(uint8_t pixel) {
 void prepareStrip() {
   if (allowColorCustomization) {
     for (int i = 0; i < LEDSTRIPLENGTH; i++) {
+      boolean changed = false;
+      if(red[i] != ledStripColor[0] || green[i] != ledStripColor[1] || blue[i] != ledStripColor[2] || brightness[i] != GENERALBRIGHTNESS) changed = true;
       red[i] = ledStripColor[0];
       green[i] = ledStripColor[1];
       blue[i] = ledStripColor[2];
       brightness[i] = GENERALBRIGHTNESS;
+      if(changed) calcBrightness(i);
     }
   } else {
     for (int i = 0; i < LEDSTRIPLENGTH; i++) {
+      boolean changed = false;
+      if(red[i] != teamColor[0] || green[i] != teamColor[1] || blue[i] != teamColor[2] || brightness[i] != GENERALBRIGHTNESS) changed = true;
       red[i] = teamColor[0];
       green[i] = teamColor[1];
       blue[i] = teamColor[2];
       brightness[i] = GENERALBRIGHTNESS;
+      if(changed) calcBrightness(i);
     }
   }
 }

@@ -44,9 +44,6 @@ int port = 3000;
 // Nickname for this player
 String nickname = "ThzD";
 
-// Name of the gun
-String gunName = "ZF-1";
-
 // ---
 // End of user configuration
 // ---

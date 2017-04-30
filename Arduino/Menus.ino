@@ -226,7 +226,7 @@ void nameMenu(uint8_t input) {
   display.setCursor(0, 1);
   display.print("NAME:");
   display.setCursor(0, TEXTSIZE+1);
-  display.print(gunName);
+  display.print(nickname);
   display.setCursor(10, TEXTSIZE * 2);
   display.setTextColor(BLACK);
   display.print("<- BACK");
