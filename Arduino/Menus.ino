@@ -176,7 +176,7 @@ void ledMenu(uint8_t input) {
   }
 }
 
-String primaries[] = {"RED  ", "GREEN", "BLUE "};
+String primaries[] = {"RED   ", "GREEN ", "BLUE  "};
 #define COLORMENULENGTH   5
 long colorTimer = millis();
 
@@ -190,7 +190,7 @@ void colorMenu(uint8_t input) {
     display.print(ledStripColor[i]);
   }
   display.setCursor(10, TEXTSIZE * 3);
-  display.print("BRIGHTNESS  ");
+  display.print("BRIGHT ");
   display.print(GENERALBRIGHTNESS);
   display.setCursor(10, TEXTSIZE * 4);
   display.println("<- BACK");
@@ -207,7 +207,7 @@ void colorMenu(uint8_t input) {
     }  else if (cursorLocation < 4) {
       if (millis() > colorTimer + SCROLLSPEED) {
         GENERALBRIGHTNESS++;
-        GENERALBRIGHTNESS %= 256;
+        GENERALBRIGHTNESS %= 101;
         colorTimer = millis();
       }
     } else {

@@ -112,7 +112,7 @@ boolean allowReloads = true;
 boolean gameHasTimer = false;
 boolean allowColorCustomization = true;
 
-uint8_t GENERALBRIGHTNESS = 255;
+uint8_t GENERALBRIGHTNESS = 100;
 uint8_t ledStripColor[] = {0, 0, 0};
 uint8_t teamColor[] = {0, 0, 0};
 
