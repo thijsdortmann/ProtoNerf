@@ -2,7 +2,7 @@ void socketHandler() {
   // If connection is dead, reconnect.
   if (!socket.connected()) {
 
-    showPopup("Reconnecting", "The server connection was lost. Trying to restore...");
+    showBroadcast("Reconnecting", "The server connection was lost. Trying to restore...");
 
     socket.reconnect(server, port);
     delay(2000);
@@ -27,11 +27,89 @@ void socketHandler() {
   }
 }
 
-void ledController() {
-    ledJ++;
-    if (ledJ > 255) ledJ = 0;
-    for (ledI = 0; ledI < strip.numPixels(); ledI++) {
-      strip.setPixelColor(ledI, Wheel(((ledI * 256 / strip.numPixels()) + ledJ) & 255));
+void displayHandler() {
+  int p = getPress();
+  if (p == SINGLECLICK) {
+    clickCounter++;
+  }
+
+  if (broadcast) {
+    if (buttonPressed(LOGICBUTTON) || millis() > timeOutTimer + TIMEOUTTIME) {
+      //timeOutTimer = millis();
+      resetButton();
+      broadcast = false;
     }
-    strip.show();
+  }
+  else if (menu) {
+    display.clearDisplay();
+    handleMenu(p);
+  } else {
+    display.clearDisplay();
+    ammoCounter();
+
+    //ammo counter and time:
+    display.setTextSize(5);
+    if (bullets < 10) {
+      display.setCursor(29, 10);
+    } else {
+      display.setCursor(14, 10);
+    }
+    display.println(bullets);
+
+    display.setCursor(27, 0);
+    display.setTextSize(1);
+    //Change this for the actual timer
+    if (gameHasTimer) {
+      display.println(timeLeft());
+    } else {
+      display.println("07:29");
+    }
+    //button controls:
+    if (p == SINGLECLICK) {
+      boolean isReload = false;
+      if (millis() < TimeSinceLast + DOUBLECLICKTIME) {
+        //reload the gun if that is possible
+        if (allowReloads) {
+          reload();
+          TimeSinceLast = millis() - DOUBLECLICKTIME;
+          isReload = true;
+        }
+      } else {
+        bullets --;
+      }
+      if (!isReload) {
+        TimeSinceLast = millis();
+      }
+
+
+    } else if (p == LONGCLICK) {
+      goToMenu(1);
+    }
+  }
+
+  display.display();
 }
+
+void lightHandler() {
+  //lights of the sight
+  if (sightLedOn) {
+    analogWrite(SIGHTLED, ledBrightness);
+  } else {
+    analogWrite(SIGHTLED, 0);
+  }
+  if (backLightOn) {
+    analogWrite(BACKLIGHT, backLightBrightness);
+  } else {
+    analogWrite(BACKLIGHT, 0);
+  }
+  //backLight
+
+  //do the ledstrip
+  prepareStrip(); //keeps the strip updated, doesn not require much memory
+  showStrip();    //shows the strip with the current values
+
+  //OTHER FUNCTIONS THAT ARE POSSIBLE
+  //setBrightness(index, brightness); //works for each individual pixel
+  //setColor(index, red, green, blue); //works for each individual pixel
+}
+

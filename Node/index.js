@@ -15,6 +15,8 @@ app.get('/', function(req, res) {
     res.sendFile(__dirname + '/public_http/root.html');
 });
 
+const players = [];
+
 // This callback handles the functions for a connected device.
 io.on('connection', function(socket) {
     let nick = 0;
@@ -24,14 +26,20 @@ io.on('connection', function(socket) {
     socket.on('nick', function(data) {
         console.log('user identified as:', data);
         nick = data;
+        players.push(nick);
     });
 
     socket.on('disconnect', function() {
         console.log('disconnected');
+        if(nick) players.splice(players.indexOf(nick), 1);
     });
 });
 
 app.get('/test', function(req, res) {
     io.emit('p', req.query.msg);
     res.send('OK');
+});
+
+app.get('/players', function(req, res) {
+    res.send(players);
 });

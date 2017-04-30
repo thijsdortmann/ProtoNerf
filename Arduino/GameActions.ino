@@ -9,7 +9,11 @@ void parseData(char event, String data) {
   
   switch (event) {
     case 'p':
-      showPopup("New message!", data);
+      showBroadcast("New broadcast", data);
       break;
   }
+}
+
+void reload() {
+  bullets = MAXBULLETS;
 }

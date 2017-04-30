@@ -15,12 +15,19 @@
 #include <Adafruit_PCD8544.h>
 #include <Fonts/TomThumb.h>
 
+#include <EEPROM.h>
+
 #include <ESP8266WiFi.h>
 #include "WifiConfig.h"
 
 #include "SocketIOClient.h"
 
 #include <Adafruit_NeoPixel.h>
+
+#include "MenuItem.h"
+#ifdef __AVR__
+#include <avr/power.h>
+#endif
 
 // ----
 // Begin of user configuration
@@ -37,6 +44,9 @@ int port = 3000;
 // Nickname for this player
 String nickname = "ThzD";
 
+// Name of the gun
+String gunName = "ZF-1";
+
 // ---
 // End of user configuration
 // ---
@@ -47,6 +57,67 @@ String nickname = "ThzD";
 // D6 - Data/Command select (D/C)
 // D1 - LCD chip select (CE)
 // D2 - LCD reset (RST)
+
+// Non variables, change these to the fit the WeMos
+
+#define TRIGGERBUTTON     A0
+#define LOGICBUTTON       D3
+#define BACKLIGHT         RX
+#define SIGHTLED          D8
+#define LEDSTRIP          D4
+#define RELAY             D0
+
+// IDENTIFIERS
+#define LONGCLICK         3
+#define SINGLECLICK       1
+#define DOUBLECLICK       2
+
+// BEHAVIOUR
+#define DEBOUNCE          50
+#define SCROLLSPEED       50
+
+// GUN PARAMETERS
+#define MAXBULLETS        20
+#define LEDSTRIPLENGTH    10
+
+#define NUMFLAKES 10
+#define XPOS      0
+#define YPOS      1
+#define DELTAY    2
+
+#define LOGO16_GLCD_HEIGHT 16
+#define LOGO16_GLCD_WIDTH  16
+
+String role = "TRAITOR";
+String broadCastMessage = "";
+
+// EEPROM adresses
+int colorAdress = 0;
+int brightnessAdress;
+#define NEWCOLOR    1;
+
+// Logic variables
+int bullets = MAXBULLETS;
+int menuLength = 0;
+int cursorLocation = 0;
+int menuLocation = 0;
+int ledBrightness = 125;
+boolean sightLedOn  = true;
+int backLightBrightness = 255;
+boolean backLightOn = true;
+boolean hasRole = true;
+
+boolean broadcast = false;
+boolean menu = false;
+boolean gamePlaying = false;
+
+boolean allowReloads = true;
+boolean gameHasTimer = false;
+boolean allowColorCustomization = true;
+
+uint8_t GENERALBRIGHTNESS = 255;
+uint8_t ledStripColor[] = {0, 0, 0};
+uint8_t teamColor[] = {0, 0, 0};
 
 // Initialize display.
 // We're using hardware SPI (where SCLK and DIN are always on D5 and D7),
@@ -63,13 +134,19 @@ extern String Rcontent;
 unsigned long lastPing = 0;
 long pingInterval = 25000;
 
+#define TIMEOUTTIME     10000
+int DOUBLECLICKTIME = 250;
+int clickCounter = 0;
+long timeOutTimer = millis();
+long TimeSinceLast = millis();
+
 // LED strip control
-Adafruit_NeoPixel strip = Adafruit_NeoPixel(10, D4, NEO_GRB + NEO_KHZ800);
-uint16_t ledI, ledJ;
+Adafruit_NeoPixel ledStrip = Adafruit_NeoPixel(10, LEDSTRIP, NEO_GRB + NEO_KHZ800);
 
 // Threads
 Thread* thread_socketHandler;
-Thread* thread_ledController;
+Thread* thread_lightHandler;
+Thread* thread_displayHandler;
 
 ThreadController threadController;
 
@@ -77,24 +154,57 @@ void setup() {
   Serial.begin(115200);
   delay(10);
 
+  brightnessAdress = colorAdress + 4;
+  
+  // Set up EEPROM, initialize values if they aren't there yet.
+  EEPROM.begin(128);
+  if (EEPROM.read(colorAdress) == 0) {
+    for (int i = 0; i < 3; i++) {
+      EEPROM.write(i + (colorAdress + 1), ledStripColor[i]);
+    }
+    EEPROM.write(brightnessAdress, ledBrightness);
+    EEPROM.write(brightnessAdress + 1, backLightBrightness);
+    EEPROM.write(brightnessAdress + 2, sightLedOn ? 1 : 0);
+    EEPROM.write(brightnessAdress + 3, backLightOn ? 1 : 0);
+  }
+  EEPROM.write(colorAdress, 1);
+  EEPROM.commit();
+
+  // Initialize LED strip colors from EEPROM.
+  for (int i = 0; i < 3; i++) {
+    ledStripColor[i] = EEPROM.read(colorAdress + i + 1);
+  }
+  ledBrightness = EEPROM.read(brightnessAdress);
+  backLightBrightness = EEPROM.read(brightnessAdress + 1);
+  sightLedOn = EEPROM.read(brightnessAdress + 2) == 1 ? true : false;
+  backLightOn = EEPROM.read(brightnessAdress + 3) == 1 ? true : false;
+
+  pinMode(TRIGGERBUTTON, INPUT_PULLUP);
+  pinMode(LOGICBUTTON, INPUT_PULLUP);
+
+  pinMode(BACKLIGHT, OUTPUT);
+  analogWrite(BACKLIGHT, backLightBrightness);
+  pinMode(SIGHTLED, OUTPUT);
+  analogWrite(SIGHTLED, ledBrightness);
+  
   Serial.println("");
 
   Serial.println("Initializing LED strip");
-  strip.begin();
-  strip.show();
+  ledStrip.begin();
+  initializeStrip();
 
   Serial.println("Initializing screen.");
 
   display.begin();
 
   // Set contrast of display
-  display.setContrast(50);
+  display.setContrast(60);
 
   // Clear display, thus removing the splash screen.
   display.clearDisplay();
 
   // Show connecting to WiFi status on LCD.
-  showPopup("Connecting WiFi...", ssid);
+  showMessage("Connecting WiFi", ssid);
  
   // Kindly ask ESP8266 to connect to WiFi
   WiFi.mode(WIFI_STA);
@@ -109,16 +219,8 @@ void setup() {
     delay(500);
   }
 
-  // Connection has been established. Show IP on screen.
-  display.clearDisplay();
-  display.println("Connected to WiFi");
-  display.setTextColor(BLACK, WHITE);
-  display.println(WiFi.localIP());
-  display.display();
-
-  // Delay to allow user to read IP on screen.
-  delay(2000);
-
+  showMessage("Connecting server", server);
+  
   // Establish Socket.io connection to server
   if (!socket.connect(server, port)) {
     display.println("Server connection failed.");
@@ -132,21 +234,30 @@ void setup() {
     gameInit();
   }
 
+  // Start timers.
+  startTimer(5, 0);
+
   // Set up threads
   thread_socketHandler = new Thread();
   thread_socketHandler->enabled = true;
   thread_socketHandler->setInterval(100);
   thread_socketHandler->onRun(socketHandler);
 
-  thread_ledController = new Thread();
-  thread_ledController->enabled = true;
-  thread_ledController->setInterval(25);
-  thread_ledController->onRun(ledController);
+  thread_lightHandler = new Thread();
+  thread_lightHandler->enabled = true;
+  thread_lightHandler->setInterval(25);
+  thread_lightHandler->onRun(lightHandler);
+
+  thread_displayHandler = new Thread();
+  thread_displayHandler->enabled = true;
+  thread_displayHandler->setInterval(100);
+  thread_displayHandler->onRun(displayHandler);
 
   // Set up thread controller
   threadController = ThreadController();
   threadController.add(thread_socketHandler);
-  threadController.add(thread_ledController);
+  threadController.add(thread_lightHandler);
+  threadController.add(thread_displayHandler);
 }
 
 void loop() {
