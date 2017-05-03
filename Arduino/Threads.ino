@@ -65,26 +65,7 @@ void displayHandler() {
       display.println("07:29");
     }
     //button controls:
-    if (p == SINGLECLICK) {
-      boolean isReload = false;
-      if (millis() < TimeSinceLast + DOUBLECLICKTIME) {
-        //reload the gun if that is possible
-        if (allowReloads) {
-          reload();
-          TimeSinceLast = millis() - DOUBLECLICKTIME;
-          isReload = true;
-        }
-      } else {
-        bullets --;
-      }
-      if (!isReload) {
-        TimeSinceLast = millis();
-      }
-
-
-    } else if (p == LONGCLICK) {
-      goToMenu(1);
-    }
+    normalButtonHandler(p);
   }
 
   display.display();

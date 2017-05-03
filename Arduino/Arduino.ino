@@ -57,7 +57,7 @@ String nickname = "ThzD";
 
 // Non variables, change these to the fit the WeMos
 
-#define TRIGGERBUTTON     A0
+#define TRIGGERBUTTON     TX
 #define LOGICBUTTON       D3
 #define BACKLIGHT         RX
 #define SIGHTLED          D8

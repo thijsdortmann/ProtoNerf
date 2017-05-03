@@ -81,6 +81,41 @@ void prepareStrip() {
   }
 }
 
+uint8_t _start = 0;
+#define animationLength 16
+#define ANIMATIONSPEED 5
+boolean shooting = false;
+long animationTimer = millis();
+
+void shoot() {
+  shooting = true;
+  animationTimer = millis();
+}
+void enableShootAnimation() {
+  if (shooting && millis() > animationTimer + ANIMATIONSPEED) {
+    for (int i = 0; i < LEDSTRIPLENGTH; i++) {
+      //first reset everything
+      setBrightness(i, GENERALBRIGHTNESS);
+    }
+    int startPos = _start - animationLength;
+    for (int i = startPos; i < (startPos + animationLength); i++) {
+      if (i >= 0 && i < LEDSTRIPLENGTH) {
+        //set some to the proper brightness
+        setBrightness(i, 255);
+      }
+    }
+    ledStrip.show();
+    //    Serial.println(" ");
+    if (_start < LEDSTRIPLENGTH + animationLength) {
+      _start++;
+      animationTimer = millis();
+    } else {
+      _start = 0;
+      shooting = false;
+    }
+  }
+}
+
 // Input a value 0 to 255 to get a color value.
 // The colours are a transition r - g - b - back to r.
 uint32_t Wheel(byte WheelPos) {
