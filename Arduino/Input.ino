@@ -85,7 +85,32 @@ int getPress() {
     return 0;
   }
 }
+void normalButtonHandler(uint8_t p) {
+  if (p == SINGLECLICK) {
+      boolean isReloaded = false;
+      if (millis() < TimeSinceLast + DOUBLECLICKTIME) {
+        //reload the gun if that is possible
+        if (allowReloads) {
+          reload();
+          TimeSinceLast = millis() - DOUBLECLICKTIME;
+          isReloaded = true;
+        }
+      } else {
+        if (bullets < MAXBULLETS) {
+          //add a bullet one at a time
+        bullets ++;
+        }
+      }
+      if (!isReloaded) {
+        TimeSinceLast = millis();
+      }
 
+
+    } else if (p == LONGCLICK) {
+      //go to the main menu
+      goToMenu(1);
+    }
+}
 long spamTimer = millis();
 boolean triggerReleased = true;
 boolean triggerPressed = false;
@@ -96,12 +121,15 @@ void ammoCounter() {
     spamTimer = millis();
   }
   if (millis() > spamTimer + DEBOUNCE) {
-    triggerPressed = true;
+    if (buttonPressed(TRIGGERBUTTON)) {
+      triggerPressed = true;
+    }
   }
   if (triggerPressed) {
     if (!buttonPressed(TRIGGERBUTTON)) {
       if (bullets > 0) {
-        //bullets --;
+        bullets --;
+        shoot();
       }
       triggerPressed = false;
     }
