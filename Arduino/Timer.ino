@@ -29,7 +29,7 @@ String timeLeft() {
   return output;
 }
 void startTimer(uint8_t mins, uint8_t secs) {
-  gameHasTimer = true;
+  setTimer(true);
   minutes = mins;
   seconds = secs;
   timeCounter = millis();

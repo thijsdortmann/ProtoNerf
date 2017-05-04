@@ -27,6 +27,7 @@ void setBrightness(uint8_t pixelNum, uint8_t _b) {
 //shows the strip
 void showStrip() {
   for (int i = 0; i < LEDSTRIPLENGTH; i++) {
+    setBrightness(i, brightness[i]);
     ledStrip.setPixelColor(i, visibleRed[i], visibleGreen[i], visibleBlue[i]);
   }
   ledStrip.show();
@@ -36,13 +37,13 @@ void initializeStrip() {
   prepareStrip();
   /*for (int i = 0; i < LEDSTRIPLENGTH; i++) {
     calcBrightness(i);
-  }*/
+    }*/
 }
 /**
- * Calculates the brightness of each individual pixel based on mapping
- * R G and B
- * bit CPU intensive but WEMOS can handle it no problem
- */
+   Calculates the brightness of each individual pixel based on mapping
+   R G and B
+   bit CPU intensive but WEMOS can handle it no problem
+*/
 void calcBrightness(uint8_t pixel) {
   if (brightness[pixel] <= 0) {
     visibleRed[pixel] = visibleGreen[pixel] = visibleBlue[pixel] = 0;
@@ -60,23 +61,28 @@ void calcBrightness(uint8_t pixel) {
 void prepareStrip() {
   if (allowColorCustomization) {
     for (int i = 0; i < LEDSTRIPLENGTH; i++) {
-      boolean changed = false;
-      if(red[i] != ledStripColor[0] || green[i] != ledStripColor[1] || blue[i] != ledStripColor[2] || brightness[i] != GENERALBRIGHTNESS) changed = true;
-      red[i] = ledStripColor[0];
-      green[i] = ledStripColor[1];
-      blue[i] = ledStripColor[2];
-      brightness[i] = GENERALBRIGHTNESS;
-      if(changed) calcBrightness(i);
+    //  boolean changed = false;
+      if (red[i] != ledStripColor[0] || green[i] != ledStripColor[1] || blue[i] != ledStripColor[2] || brightness[i] != GENERALBRIGHTNESS) {
+        //changed = true;
+        red[i] = ledStripColor[0];
+        green[i] = ledStripColor[1];
+        blue[i] = ledStripColor[2];
+        brightness[i] = GENERALBRIGHTNESS;
+        calcBrightness(i);
+        // }
+        //if(changed) calcBrightness(i);
+      }
     }
   } else {
     for (int i = 0; i < LEDSTRIPLENGTH; i++) {
-      boolean changed = false;
-      if(red[i] != teamColor[0] || green[i] != teamColor[1] || blue[i] != teamColor[2] || brightness[i] != GENERALBRIGHTNESS) changed = true;
+     // boolean changed = false;
+      if (red[i] != teamColor[0] || green[i] != teamColor[1] || blue[i] != teamColor[2] || brightness[i] != GENERALBRIGHTNESS) {
       red[i] = teamColor[0];
       green[i] = teamColor[1];
       blue[i] = teamColor[2];
       brightness[i] = GENERALBRIGHTNESS;
-      if(changed) calcBrightness(i);
+      calcBrightness(i);
+      }
     }
   }
 }

@@ -59,10 +59,11 @@ void displayHandler() {
     display.setCursor(27, 0);
     display.setTextSize(1);
     //Change this for the actual timer
-    if (gameHasTimer) {
+    if (hasTimer()) {
       display.println(timeLeft());
     } else {
-      display.println("07:29");
+      //print something nice here
+      //display.println("07:29");
     }
     //button controls:
     normalButtonHandler(p);
@@ -83,10 +84,16 @@ void lightHandler() {
   } else {
     analogWrite(BACKLIGHT, 0);
   }
-  //backLight
+  //relay
+  if (getFiringMode()) {
+    digitalWrite(RELAY, LOW);
+  } else {
+    digitalWrite(RELAY, HIGH);
+  }
+  
 
   //do the ledstrip
-  prepareStrip(); //keeps the strip updated, doesn not require much memory
+  prepareStrip(); //keeps the strip updated, does not require much memory
   showStrip();    //shows the strip with the current values
 
   //OTHER FUNCTIONS THAT ARE POSSIBLE

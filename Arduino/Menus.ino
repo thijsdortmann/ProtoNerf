@@ -57,32 +57,32 @@ void mainMenu(uint8_t input) {
   int maxLength = menuSize + 1;
   int NORMALLENGTH = menuSize;
   int menuLength = NORMALLENGTH;
-  if (!allowColorCustomization) {
+  if (!allowColorCustomization()) {
     menuLength--;
   }
   handleCursor(input, menuLength + 1);
-  if (hasRole) {
+  if (hasRole()) {
     maxLength = 4;
     int roleLocation = maxLength * TEXTSIZE;
     if (menuLength < maxLength) {
       roleLocation = menuLength * TEXTSIZE;
     }
     display.setCursor(10, roleLocation);
-    display.fillRect(0, roleLocation-1, 84, 48, 100);
+    display.fillRect(0, roleLocation - 1, 84, 48, 100);
     display.setTextColor(WHITE);
-    display.print(role);
+    display.print(getRole());
     //display.print(roleLocation);
   } else {
     maxLength = 5;
   }
   display.setTextColor(BLACK);
   if (cursorLocation > maxLength - 1) {
-   // offSet = TEXTSIZE * ((maxLength - 1) - cursorLocation) * -1;
+    // offSet = TEXTSIZE * ((maxLength - 1) - cursorLocation) * -1;
     //startPos = (maxLength - 1) - cursorLocation;
     startPos = cursorLocation - (maxLength - 1);
     offSet = -1 * (startPos * TEXTSIZE);
   }
-  
+
   drawSelector(cursorLocation, offSet);
   for (int i = startPos; i < startPos + maxLength; i++) {
     if (i < menuLength) {
@@ -110,10 +110,10 @@ void mainMenu(uint8_t input) {
 void ipMenu(uint8_t input) {
   display.setTextSize(1);
   display.setTextColor(WHITE);
-  display.fillRect(0, 0, 84, (TEXTSIZE * 2) -1, 100);
+  display.fillRect(0, 0, 84, (TEXTSIZE * 2) - 1, 100);
   display.setCursor(0, 1);
   display.print("IP ADRESS:");
-  display.setCursor(0, TEXTSIZE+1);
+  display.setCursor(0, TEXTSIZE + 1);
   display.print(WiFi.localIP());
   display.setCursor(10, TEXTSIZE * 2);
   display.setTextColor(BLACK);
@@ -167,9 +167,9 @@ void ledMenu(uint8_t input) {
       resetButton();
     } else if (cursorLocation == 4) {
       EEPROM.write(brightnessAdress, ledBrightness);
-      EEPROM.write(brightnessAdress+1, backLightBrightness);
-      EEPROM.write(brightnessAdress+2, sightLedOn ? 1 : 0);
-      EEPROM.write(brightnessAdress+3, backLightOn ? 1 : 0);
+      EEPROM.write(brightnessAdress + 1, backLightBrightness);
+      EEPROM.write(brightnessAdress + 2, sightLedOn ? 1 : 0);
+      EEPROM.write(brightnessAdress + 3, backLightOn ? 1 : 0);
       EEPROM.commit();
       goToMenu(MAINMENU);
     }
@@ -214,6 +214,7 @@ void colorMenu(uint8_t input) {
       for (int i = 0; i < 3; i++) {
         EEPROM.write(colorAdress + i + 1, ledStripColor[i]);
       }
+      EEPROM.write(colorAdress + 4, GENERALBRIGHTNESS);
       EEPROM.commit();
       goToMenu(MAINMENU);
     }
@@ -222,10 +223,10 @@ void colorMenu(uint8_t input) {
 void nameMenu(uint8_t input) {
   display.setTextSize(1);
   display.setTextColor(WHITE);
-  display.fillRect(0, 0, 84, (TEXTSIZE * 2) -1, 100);
+  display.fillRect(0, 0, 84, (TEXTSIZE * 2) - 1, 100);
   display.setCursor(0, 1);
   display.print("NAME:");
-  display.setCursor(0, TEXTSIZE+1);
+  display.setCursor(0, TEXTSIZE + 1);
   display.print(nickname);
   display.setCursor(10, TEXTSIZE * 2);
   display.setTextColor(BLACK);
@@ -263,3 +264,23 @@ void leaveMenu() {
   resetButton();
   menu = false;
 }
+long startUpTimer = millis() + 5000;
+void startUpMenu() {
+  int timeLeft = 5000;
+  while (timeLeft > 0) {
+    display.clearDisplay();
+    timeLeft = startUpTimer - millis();
+    display.setCursor(0, TEXTSIZE * 2);
+    display.println("Connect?");
+    display.setCursor(27, TEXTSIZE * 3);
+    display.println(timeLeft);
+    if (buttonPressed(LOGICBUTTON)) {
+      shouldConnect(true);
+      startUpTimer = millis();
+      break;
+    }
+    delay(100);
+    display.display();
+  }
+}
+

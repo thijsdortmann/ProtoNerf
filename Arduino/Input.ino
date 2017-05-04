@@ -90,7 +90,7 @@ void normalButtonHandler(uint8_t p) {
       boolean isReloaded = false;
       if (millis() < TimeSinceLast + DOUBLECLICKTIME) {
         //reload the gun if that is possible
-        if (allowReloads) {
+        if (allowReloads()) {
           reload();
           TimeSinceLast = millis() - DOUBLECLICKTIME;
           isReloaded = true;
@@ -135,4 +135,8 @@ void ammoCounter() {
     }
   }
   //display.setTextSize(2);
+}
+
+void reload() {
+  bullets = MAXBULLETS;
 }

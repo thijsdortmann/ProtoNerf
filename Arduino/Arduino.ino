@@ -85,8 +85,8 @@ String nickname = "ThzD";
 #define LOGO16_GLCD_HEIGHT 16
 #define LOGO16_GLCD_WIDTH  16
 
-String role = "TRAITOR";
-String broadCastMessage = "";
+//String role = "TRAITOR";
+//String broadCastMessage = "";
 
 // EEPROM adresses
 int colorAdress = 0;
@@ -102,15 +102,15 @@ int ledBrightness = 125;
 boolean sightLedOn  = true;
 int backLightBrightness = 255;
 boolean backLightOn = true;
-boolean hasRole = true;
+//boolean hasRole = true;
 
 boolean broadcast = false;
 boolean menu = false;
-boolean gamePlaying = false;
+//boolean gamePlaying = false;
 
-boolean allowReloads = true;
-boolean gameHasTimer = false;
-boolean allowColorCustomization = true;
+//boolean allowReloads = true;
+//boolean gameHasTimer = false;
+//boolean allowColorCustomization = true;
 
 uint8_t GENERALBRIGHTNESS = 100;
 uint8_t ledStripColor[] = {0, 0, 0};
@@ -151,40 +151,21 @@ void setup() {
   Serial.begin(115200);
   delay(10);
 
-  brightnessAdress = colorAdress + 4;
-  
+  brightnessAdress = colorAdress + 5;
+
   // Set up EEPROM, initialize values if they aren't there yet.
-  EEPROM.begin(128);
-  if (EEPROM.read(colorAdress) == 0) {
-    for (int i = 0; i < 3; i++) {
-      EEPROM.write(i + (colorAdress + 1), ledStripColor[i]);
-    }
-    EEPROM.write(brightnessAdress, ledBrightness);
-    EEPROM.write(brightnessAdress + 1, backLightBrightness);
-    EEPROM.write(brightnessAdress + 2, sightLedOn ? 1 : 0);
-    EEPROM.write(brightnessAdress + 3, backLightOn ? 1 : 0);
-  }
-  EEPROM.write(colorAdress, 1);
-  EEPROM.commit();
+  EEPROMHandler();
 
-  // Initialize LED strip colors from EEPROM.
-  for (int i = 0; i < 3; i++) {
-    ledStripColor[i] = EEPROM.read(colorAdress + i + 1);
-  }
-  ledBrightness = EEPROM.read(brightnessAdress);
-  backLightBrightness = EEPROM.read(brightnessAdress + 1);
-  sightLedOn = EEPROM.read(brightnessAdress + 2) == 1 ? true : false;
-  backLightOn = EEPROM.read(brightnessAdress + 3) == 1 ? true : false;
-
-  pinMode(TRIGGERBUTTON, INPUT_PULLUP);
-  pinMode(LOGICBUTTON, INPUT_PULLUP);
-
-  pinMode(BACKLIGHT, OUTPUT);
-  analogWrite(BACKLIGHT, backLightBrightness);
-  pinMode(SIGHTLED, OUTPUT);
-  analogWrite(SIGHTLED, ledBrightness);
-  
   Serial.println("");
+
+  //Seting up basic values
+  setTimer(false);
+  disableRole();
+  setGame(false);
+  setColorCustomization(true);
+  setFiringMode(true);
+  setReloads(true);
+  shouldConnect(false);
 
   Serial.println("Initializing LED strip");
   ledStrip.begin();
@@ -200,43 +181,47 @@ void setup() {
   // Clear display, thus removing the splash screen.
   display.clearDisplay();
 
-  // Show connecting to WiFi status on LCD.
-  showMessage("Connecting WiFi", ssid);
- 
-  // Kindly ask ESP8266 to connect to WiFi
-  WiFi.mode(WIFI_STA);
-  WiFi.begin(ssid, password);
-
-  // Check if WiFi is connected, if not add a dot on display to show that the ESP8266
-  // is connecting and didn't crash.
-  while (WiFi.status() != WL_CONNECTED) {
-    display.setCursor(5, 83);
-    display.print("_");
-    display.display();
-    delay(500);
-  }
-
-  showMessage("Connecting server", server);
+  startUpMenu();
   
-  // Establish Socket.io connection to server
-  if (!socket.connect(server, port)) {
-    display.println("Server connection failed.");
-    display.display();
-    return;
-  }
+  if (hasServer()) {
+    // Show connecting to WiFi status on LCD.
+    showMessage("Connecting WiFi", ssid);
 
-  if (socket.connected()) {
-    display.println("Connected to server");
-    display.display();
-    gameInit();
+    // Kindly ask ESP8266 to connect to WiFi
+    WiFi.mode(WIFI_STA);
+    WiFi.begin(ssid, password);
+
+    // Check if WiFi is connected, if not add a dot on display to show that the ESP8266
+    // is connecting and didn't crash.
+    while (WiFi.status() != WL_CONNECTED) {
+      display.setCursor(5, 83);
+      display.print("_");
+      display.display();
+      delay(500);
+    }
+
+    showMessage("Connecting server", server);
+
+    // Establish Socket.io connection to server
+    if (!socket.connect(server, port)) {
+      display.println("Server connection failed.");
+      display.display();
+      return;
+    }
+
+    if (socket.connected()) {
+      display.println("Connected to server");
+      display.display();
+      gameInit();
+    }
   }
 
   // Start timers.
-  startTimer(5, 0);
+  //startTimer(5, 0);
 
   // Set up threads
   thread_socketHandler = new Thread();
-  thread_socketHandler->enabled = true;
+  thread_socketHandler->enabled = hasServer();
   thread_socketHandler->setInterval(100);
   thread_socketHandler->onRun(socketHandler);
 

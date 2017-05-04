@@ -13,7 +13,3 @@ void parseData(char event, String data) {
       break;
   }
 }
-
-void reload() {
-  bullets = MAXBULLETS;
-}
