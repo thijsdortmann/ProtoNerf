@@ -1,7 +1,7 @@
 void EEPROMHandler() {
     brightnessAdress = colorAdress + 5;
    EEPROM.begin(128);
-  if (EEPROM.read(colorAdress) == 0) {
+  if (EEPROM.read(colorAdress) != 1) {
     for (int i = 0; i < 3; i++) {
       EEPROM.write(i + (colorAdress + 1), ledStripColor[i]);
     }

@@ -180,6 +180,7 @@ String primaries[] = {"RED   ", "GREEN ", "BLUE  "};
 #define COLORMENULENGTH   5
 long colorTimer = millis();
 
+#define MAXBRIGHTNESS 101
 void colorMenu(uint8_t input) {
   display.setTextSize(1);
   for (int i = 0; i < 3; i++) {
@@ -191,7 +192,11 @@ void colorMenu(uint8_t input) {
   }
   display.setCursor(10, TEXTSIZE * 3);
   display.print("BRIGHT ");
-  display.print(GENERALBRIGHTNESS);
+  if (GENERALBRIGHTNESS == 0) {
+    display.print("OFF");
+  } else {
+    display.print(GENERALBRIGHTNESS);
+  }
   display.setCursor(10, TEXTSIZE * 4);
   display.println("<- BACK");
 
@@ -203,13 +208,21 @@ void colorMenu(uint8_t input) {
         ledStripColor[cursorLocation]++;
         ledStripColor[cursorLocation] %= 256;
         colorTimer = millis();
+        updateStrip();
       }
     }  else if (cursorLocation < 4) {
       if (millis() > colorTimer + SCROLLSPEED) {
-        GENERALBRIGHTNESS++;
-        GENERALBRIGHTNESS %= 101;
-        colorTimer = millis();
+        if (GENERALBRIGHTNESS + 1 == MAXBRIGHTNESS) {
+          GENERALBRIGHTNESS ++;
+          GENERALBRIGHTNESS %= MAXBRIGHTNESS;
+          colorTimer = millis() + 500;
+        } else {
+          GENERALBRIGHTNESS++;
+          GENERALBRIGHTNESS %= MAXBRIGHTNESS;
+          colorTimer = millis();
+        }
       }
+      updateStrip();
     } else {
       for (int i = 0; i < 3; i++) {
         EEPROM.write(colorAdress + i + 1, ledStripColor[i]);

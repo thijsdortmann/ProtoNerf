@@ -10,6 +10,8 @@ uint8_t visibleRed[LEDSTRIPLENGTH];
 uint8_t visibleGreen[LEDSTRIPLENGTH];
 uint8_t visibleBlue[LEDSTRIPLENGTH];
 
+#define NORMALBRIGHTNESS 50 //brightness for the led when playing in teams
+
 //sets and individual pixel color
 void setColor(uint8_t pixelNum, uint8_t r, uint8_t g, uint8_t b) {
   red[pixelNum] = r;
@@ -26,6 +28,7 @@ void setBrightness(uint8_t pixelNum, uint8_t _b) {
 }
 //shows the strip
 void showStrip() {
+  enableShootAnimation();
   for (int i = 0; i < LEDSTRIPLENGTH; i++) {
     setBrightness(i, brightness[i]);
     ledStrip.setPixelColor(i, visibleRed[i], visibleGreen[i], visibleBlue[i]);
@@ -34,7 +37,7 @@ void showStrip() {
 }
 //only has to be called once
 void initializeStrip() {
-  prepareStrip();
+  updateStrip();
   /*for (int i = 0; i < LEDSTRIPLENGTH; i++) {
     calcBrightness(i);
     }*/
@@ -58,7 +61,7 @@ void calcBrightness(uint8_t pixel) {
 }
 //gets the value from either your team color or your own defined color
 //if you make animations it will work with both this way
-void prepareStrip() {
+void updateStrip() {
   if (allowColorCustomization) {
     for (int i = 0; i < LEDSTRIPLENGTH; i++) {
     //  boolean changed = false;
@@ -80,7 +83,8 @@ void prepareStrip() {
       red[i] = teamColor[0];
       green[i] = teamColor[1];
       blue[i] = teamColor[2];
-      brightness[i] = GENERALBRIGHTNESS;
+      GENERALBRIGHTNESS = NORMALBRIGHTNESS;
+      brightness[i] = GENERALBRIGHTNESS; //Set TO Brightness
       calcBrightness(i);
       }
     }
@@ -89,7 +93,7 @@ void prepareStrip() {
 
 uint8_t _start = 0;
 #define animationLength 16
-#define ANIMATIONSPEED 5
+#define ANIMATIONSPEED 1
 boolean shooting = false;
 long animationTimer = millis();
 
@@ -113,7 +117,7 @@ void enableShootAnimation() {
     ledStrip.show();
     //    Serial.println(" ");
     if (_start < LEDSTRIPLENGTH + animationLength) {
-      _start++;
+      _start+=3;
       animationTimer = millis();
     } else {
       _start = 0;

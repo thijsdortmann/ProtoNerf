@@ -96,7 +96,7 @@ void normalButtonHandler(uint8_t p) {
           isReloaded = true;
         }
       } else {
-        if (bullets < MAXBULLETS) {
+        if (bullets < MAXBULLETS && allowReloads()) {
           //add a bullet one at a time
         bullets ++;
         }
@@ -113,30 +113,35 @@ void normalButtonHandler(uint8_t p) {
 }
 long spamTimer = millis();
 boolean triggerReleased = true;
-boolean triggerPressed = false;
 void ammoCounter() {
   //display the ammo counter, dunno how yet
   if (buttonPressed(TRIGGERBUTTON) && triggerReleased) {
+    if (bullets > 0) {
+    bullets --;
+    shoot();
+    }
     triggerReleased = false;
-    spamTimer = millis();
   }
-  if (millis() > spamTimer + DEBOUNCE) {
-    if (buttonPressed(TRIGGERBUTTON)) {
-      triggerPressed = true;
-    }
+  if (!buttonPressed(TRIGGERBUTTON) && !triggerReleased ) {
+    triggerReleased = true;
   }
-  if (triggerPressed) {
-    if (!buttonPressed(TRIGGERBUTTON)) {
-      if (bullets > 0) {
-        bullets --;
-        shoot();
-      }
-      triggerPressed = false;
-    }
-  }
-  //display.setTextSize(2);
 }
 
 void reload() {
   bullets = MAXBULLETS;
 }
+//relay is stupid, only works if you set the pin as input, otherwise some floating remains :(
+boolean relayState = false;
+void switchRelay(boolean state) {
+  if (!state && relayState) {
+    pinMode(RELAY, OUTPUT);
+    digitalWrite(RELAY, HIGH);
+    relayState = state;
+  } else if (state && !relayState) {
+    digitalWrite(RELAY, LOW);
+    pinMode(RELAY, INPUT);
+    relayState = state;
+  }
+  //if (!state) digitalWrite(RELAY, HIGH);
+}
+

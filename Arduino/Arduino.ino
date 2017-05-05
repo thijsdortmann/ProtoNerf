@@ -57,9 +57,9 @@ String nickname = "ThzD";
 
 // Non variables, change these to the fit the WeMos
 
-#define TRIGGERBUTTON     TX
-#define LOGICBUTTON       D3
-#define BACKLIGHT         RX
+#define TRIGGERBUTTON     RX
+#define LOGICBUTTON       TX
+#define BACKLIGHT         D3
 #define SIGHTLED          D8
 #define LEDSTRIP          D4
 #define RELAY             D0
@@ -98,7 +98,7 @@ int bullets = MAXBULLETS;
 int menuLength = 0;
 int cursorLocation = 0;
 int menuLocation = 0;
-int ledBrightness = 125;
+int ledBrightness = 255;
 boolean sightLedOn  = true;
 int backLightBrightness = 255;
 boolean backLightOn = true;
@@ -132,7 +132,7 @@ unsigned long lastPing = 0;
 long pingInterval = 25000;
 
 #define TIMEOUTTIME     10000
-int DOUBLECLICKTIME = 250;
+int DOUBLECLICKTIME = 350;
 int clickCounter = 0;
 long timeOutTimer = millis();
 long TimeSinceLast = millis();
@@ -155,17 +155,21 @@ void setup() {
 
   // Set up EEPROM, initialize values if they aren't there yet.
   EEPROMHandler();
+  //pinMode(TRIGGERBUTTON, INPUT_PULLUP);
+  //pinMode(LOGICBUTTON, INPUT_PULLUP);
 
   Serial.println("");
 
   //Seting up basic values
-  setTimer(false);
-  disableRole();
-  setGame(false);
-  setColorCustomization(true);
-  setFiringMode(true);
-  setReloads(true);
-  shouldConnect(false);
+  setTimer(false); //is there a timer?
+  disableRole(); //what is the role?
+  setGame(false); //is a game being played?
+  setColorCustomization(true); //can you set your own color? (otherwise team colors apply)
+  setFiringMode(true); //relay on / off
+  setReloads(true); //you can reload TODO: set relay off when no bullets are there
+  shouldConnect(false); //first start up boolean
+  //setReloads(true); //
+  switchRelay(true);
 
   Serial.println("Initializing LED strip");
   ledStrip.begin();
@@ -182,7 +186,7 @@ void setup() {
   display.clearDisplay();
 
   startUpMenu();
-  
+  delay(200);
   if (hasServer()) {
     // Show connecting to WiFi status on LCD.
     showMessage("Connecting WiFi", ssid);
@@ -220,10 +224,13 @@ void setup() {
   //startTimer(5, 0);
 
   // Set up threads
+  if (hasServer()) {
   thread_socketHandler = new Thread();
   thread_socketHandler->enabled = hasServer();
   thread_socketHandler->setInterval(100);
   thread_socketHandler->onRun(socketHandler);
+  }
+  
 
   thread_lightHandler = new Thread();
   thread_lightHandler->enabled = true;
@@ -232,12 +239,15 @@ void setup() {
 
   thread_displayHandler = new Thread();
   thread_displayHandler->enabled = true;
-  thread_displayHandler->setInterval(100);
+  thread_displayHandler->setInterval(50);
   thread_displayHandler->onRun(displayHandler);
 
   // Set up thread controller
   threadController = ThreadController();
+  if (hasServer()) {
   threadController.add(thread_socketHandler);
+  }
+  
   threadController.add(thread_lightHandler);
   threadController.add(thread_displayHandler);
 }

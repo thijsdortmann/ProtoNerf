@@ -39,10 +39,12 @@ void displayHandler() {
       resetButton();
       broadcast = false;
     }
+    ammoCounter();
   }
   else if (menu) {
     display.clearDisplay();
     handleMenu(p);
+    ammoCounter();
   } else {
     display.clearDisplay();
     ammoCounter();
@@ -85,15 +87,11 @@ void lightHandler() {
     analogWrite(BACKLIGHT, 0);
   }
   //relay
-  if (getFiringMode()) {
-    digitalWrite(RELAY, LOW);
-  } else {
-    digitalWrite(RELAY, HIGH);
-  }
+  switchRelay(getFiringMode());
   
 
   //do the ledstrip
-  prepareStrip(); //keeps the strip updated, does not require much memory
+  //updateStrip(); //keeps the strip updated, does not require much memory
   showStrip();    //shows the strip with the current values
 
   //OTHER FUNCTIONS THAT ARE POSSIBLE
