@@ -2,7 +2,7 @@ void socketHandler() {
   // If connection is dead, reconnect.
   if (!socket.connected()) {
 
-    showBroadcast("Reconnecting", "The server connection was lost. Trying to restore...");
+    showMessage("Reconnecting", "The server connection was lost. Trying to restore...");
 
     socket.reconnect(server, port);
     delay(2000);
@@ -20,7 +20,7 @@ void socketHandler() {
     // If it has been a certain time since last check, check if message are received from
     // Socket.io server.
     if (socket.monitor()) {
-      if (RID.length() > 0) parseData(RID[0], Rcontent);
+      if (RID.length() > 0) parseData(RID, Rcontent);
       RID = "";
       Rcontent = "";
     }
