@@ -277,23 +277,61 @@ void leaveMenu() {
   resetButton();
   menu = false;
 }
-long startUpTimer = millis() + 5000;
+long startUpTimer = 0;
+#define DEFAULTTIME 5
 void startUpMenu() {
-  int timeLeft = 5000;
-  while (timeLeft > 0) {
-    display.clearDisplay();
-    timeLeft = startUpTimer - millis();
-    display.setCursor(0, TEXTSIZE * 2);
-    display.println("Connect?");
-    display.setCursor(27, TEXTSIZE * 3);
-    display.println(timeLeft);
-    if (buttonPressed(LOGICBUTTON)) {
-      shouldConnect(true);
-      startUpTimer = millis();
+  int timeLeft = DEFAULTTIME;
+  startUpTimer = toSeconds();
+  boolean noChoice = true;
+  int currentChoice = 0;
+  int yHeight = TEXTSIZE * 3 - 1;
+  while (timeLeft > 0 && noChoice) {
+    int input = getPress();
+    timeLeft = startUpTimer - toSeconds();
+
+    if (input == SINGLECLICK) {
+      currentChoice ++;
+      currentChoice %= 2;
+    } else if (input == LONGCLICK) {
+      noChoice = false;
       break;
     }
-    delay(100);
+    display.clearDisplay();
+    display.setCursor(0, TEXTSIZE * 1);
+    display.println("CONNECT TO SERVER?");
+    if (currentChoice == 0) {
+      display.fillRect(20, yHeight, 17, 10, 100);
+      display.setCursor(21, TEXTSIZE * 3);
+      display.setTextColor(WHITE);
+      display.print("YES");
+      //46
+      display.setCursor(48, TEXTSIZE * 3);
+      display.setTextColor(BLACK);
+      display.print("NO");
+    } else {
+      display.setCursor(21, TEXTSIZE * 3);
+      display.setTextColor(BLACK);
+      display.print("YES");
+      //46
+      display.fillRect(46, yHeight, 17, 10, 100);
+      display.setCursor(48, TEXTSIZE * 3);
+      display.setTextColor(WHITE);
+      display.print("NO");
+    }
+    display.setTextColor(BLACK);
+    display.setCursor(40, TEXTSIZE * 5);
+    display.println(timeLeft);
+
+    delay(50);
     display.display();
   }
+  if (noChoice) {
+    shouldConnect(false);
+  } else {
+    shouldConnect(currentChoice == 0 ? true : false);
+  }
+}
+long toSeconds() {
+  return long(millis() / 1000);
 }
 
