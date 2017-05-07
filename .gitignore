@@ -2,3 +2,4 @@ Arduino/WifiConfig.h
 Node/node_modules
 Node/.idea
 .DS_Store
+Node/.env

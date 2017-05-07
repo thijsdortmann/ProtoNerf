@@ -45,7 +45,7 @@ void displayHandler() {
     display.clearDisplay();
     handleMenu(p);
     ammoCounter();
-  } else {
+  } else if(!hasServer() || getGameState()) {
     display.clearDisplay();
     ammoCounter();
 
@@ -69,6 +69,9 @@ void displayHandler() {
     }
     //button controls:
     normalButtonHandler(p);
+  }else{
+    display.clearDisplay();
+    showMessage("Waiting for game start", "Your gun will be configured, and the game will begin shortly.");
   }
 
   display.display();

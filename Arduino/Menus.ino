@@ -44,8 +44,8 @@ int menuSize = 4;
 MenuItem allMenus[] = {
   MenuItem("SETTINGS", 0, IPMENU),
   MenuItem("BRIGHTNESS", 1, LEDMENU),
-  MenuItem("LEDSTRIP", 2, COLORMENU),
-  MenuItem("NAME", 3, NAMEMENU)
+  MenuItem("NAME", 2, NAMEMENU),
+  MenuItem("LEDSTRIP", 3, COLORMENU),
 };
 //allMenus[0] = new MenuItem(0, IPMENU, "SETTINGS");
 //allMenus[1] = new MenuItem(1, LEDMENU, "BRIGHTNESS");
@@ -110,17 +110,21 @@ void mainMenu(uint8_t input) {
 void ipMenu(uint8_t input) {
   display.setTextSize(1);
   display.setTextColor(WHITE);
-  display.fillRect(0, 0, 84, (TEXTSIZE * 2) - 1, 100);
+  display.fillRect(0, 0, 84, (TEXTSIZE * 4) - 1, 100);
   display.setCursor(0, 1);
-  display.print("IP ADRESS:");
+  display.print("IP ADDRESS:");
   display.setCursor(0, TEXTSIZE + 1);
   display.print(WiFi.localIP());
-  display.setCursor(10, TEXTSIZE * 2);
+  display.setCursor(0, TEXTSIZE * 2);
+  display.print("UID:");
+  display.setCursor(0, TEXTSIZE * 3);
+  display.print(ESP.getChipId());
+  display.setCursor(10, TEXTSIZE * 4);
   display.setTextColor(BLACK);
   display.print("<- BACK");
 
   handleCursor(input, 1);
-  drawSelector(cursorLocation, TEXTSIZE * 2);
+  drawSelector(cursorLocation, TEXTSIZE * 4);
 
   if (input == LONGCLICK) {
     goToMenu(MAINMENU);
@@ -277,23 +281,60 @@ void leaveMenu() {
   resetButton();
   menu = false;
 }
-long startUpTimer = millis() + 5000;
+long startUpTimer = 0;
+#define DEFAULTTIME 5
 void startUpMenu() {
-  int timeLeft = 5000;
-  while (timeLeft > 0) {
-    display.clearDisplay();
-    timeLeft = startUpTimer - millis();
-    display.setCursor(0, TEXTSIZE * 2);
-    display.println("Connect?");
-    display.setCursor(27, TEXTSIZE * 3);
-    display.println(timeLeft);
-    if (buttonPressed(LOGICBUTTON)) {
-      shouldConnect(true);
-      startUpTimer = millis();
+  int timeLeft = DEFAULTTIME;
+  startUpTimer = toSeconds() + DEFAULTTIME;
+  boolean noChoice = true;
+  int currentChoice = 1;
+  int yHeight = TEXTSIZE * 3 - 1;
+  while (timeLeft > 0 && noChoice) {
+    int input = getPress();
+    timeLeft = startUpTimer - toSeconds();
+
+    if (input == SINGLECLICK) {
+      currentChoice ++;
+      currentChoice %= 2;
+    } else if (input == LONGCLICK) {
+      noChoice = false;
       break;
     }
-    delay(100);
+    display.clearDisplay();
+    display.setCursor(0, TEXTSIZE * 1);
+    display.println("CONNECT TO SERVER?");
+    if (currentChoice == 0) {
+      display.fillRect(20, yHeight, 17, 10, 100);
+      display.setCursor(21, TEXTSIZE * 3);
+      display.setTextColor(WHITE);
+      display.print("YES");
+      //46
+      display.setCursor(48, TEXTSIZE * 3);
+      display.setTextColor(BLACK);
+      display.print("NO");
+    } else {
+      display.setCursor(21, TEXTSIZE * 3);
+      display.setTextColor(BLACK);
+      display.print("YES");
+      //46
+      display.fillRect(46, yHeight, 17, 10, 100);
+      display.setCursor(48, TEXTSIZE * 3);
+      display.setTextColor(WHITE);
+      display.print("NO");
+    }
+    display.setTextColor(BLACK);
+    display.setCursor(40, TEXTSIZE * 5);
+    display.println(timeLeft);
+
+    delay(50);
     display.display();
   }
+  if (noChoice) {
+    shouldConnect(false);
+  } else {
+    shouldConnect(currentChoice == 0 ? true : false);
+  }
 }
-
+long toSeconds() {
+  return long(millis() / 1000);
+}

@@ -75,3 +75,7 @@ boolean allowReloads() {
   return _allowReloads;
 }
 
+void setNickname(String _nickname) {
+  nickname = _nickname;
+}
+

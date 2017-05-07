@@ -62,7 +62,7 @@ void calcBrightness(uint8_t pixel) {
 //gets the value from either your team color or your own defined color
 //if you make animations it will work with both this way
 void updateStrip() {
-  if (allowColorCustomization) {
+  if (allowColorCustomization()) {
     for (int i = 0; i < LEDSTRIPLENGTH; i++) {
     //  boolean changed = false;
       if (red[i] != ledStripColor[0] || green[i] != ledStripColor[1] || blue[i] != ledStripColor[2] || brightness[i] != GENERALBRIGHTNESS) {

@@ -41,8 +41,8 @@ const char* password = WIFI_PASSWORD;
 char server[] = "192.168.178.34";
 int port = 3000;
 
-// Nickname for this player
-String nickname = "ThzD";
+// Nickname for this player, used when gun is offline
+String nickname = "";
 
 // ---
 // End of user configuration
@@ -225,12 +225,12 @@ void setup() {
 
   // Set up threads
   if (hasServer()) {
-  thread_socketHandler = new Thread();
-  thread_socketHandler->enabled = hasServer();
-  thread_socketHandler->setInterval(100);
-  thread_socketHandler->onRun(socketHandler);
+    thread_socketHandler = new Thread();
+    thread_socketHandler->enabled = hasServer();
+    thread_socketHandler->setInterval(50);
+    thread_socketHandler->onRun(socketHandler);
   }
-  
+
 
   thread_lightHandler = new Thread();
   thread_lightHandler->enabled = true;
@@ -245,9 +245,9 @@ void setup() {
   // Set up thread controller
   threadController = ThreadController();
   if (hasServer()) {
-  threadController.add(thread_socketHandler);
+    threadController.add(thread_socketHandler);
   }
-  
+
   threadController.add(thread_lightHandler);
   threadController.add(thread_displayHandler);
 }
