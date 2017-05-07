@@ -285,15 +285,9 @@ long startUpTimer = 0;
 #define DEFAULTTIME 5
 void startUpMenu() {
   int timeLeft = DEFAULTTIME;
-<<<<<<< HEAD
   startUpTimer = toSeconds() + DEFAULTTIME;
   boolean noChoice = true;
   int currentChoice = 1;
-=======
-  startUpTimer = toSeconds();
-  boolean noChoice = true;
-  int currentChoice = 0;
->>>>>>> a7b9d7775e84d80aeef38bc00245936410793c49
   int yHeight = TEXTSIZE * 3 - 1;
   while (timeLeft > 0 && noChoice) {
     int input = getPress();
