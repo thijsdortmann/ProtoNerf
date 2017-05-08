@@ -3,6 +3,7 @@ void gameInit() {
 }
 
 void parseData(String event, String data) {
+  //println werkt niet thijs, RX en TX worden gebruikt
   Serial.println("parseData called");
   Serial.print("event: ");
   Serial.println(event);
