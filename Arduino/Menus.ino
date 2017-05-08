@@ -44,8 +44,8 @@ int menuSize = 4;
 MenuItem allMenus[] = {
   MenuItem("SETTINGS", 0, IPMENU),
   MenuItem("BRIGHTNESS", 1, LEDMENU),
-  MenuItem("NAME", 2, NAMEMENU),
-  MenuItem("LEDSTRIP", 3, COLORMENU),
+  MenuItem("LEDSTRIP", 2, COLORMENU),
+  MenuItem("NAME", 3, NAMEMENU)
 };
 //allMenus[0] = new MenuItem(0, IPMENU, "SETTINGS");
 //allMenus[1] = new MenuItem(1, LEDMENU, "BRIGHTNESS");
@@ -110,21 +110,17 @@ void mainMenu(uint8_t input) {
 void ipMenu(uint8_t input) {
   display.setTextSize(1);
   display.setTextColor(WHITE);
-  display.fillRect(0, 0, 84, (TEXTSIZE * 4) - 1, 100);
+  display.fillRect(0, 0, 84, (TEXTSIZE * 2) - 1, 100);
   display.setCursor(0, 1);
-  display.print("IP ADDRESS:");
+  display.print("IP ADRESS:");
   display.setCursor(0, TEXTSIZE + 1);
   display.print(WiFi.localIP());
-  display.setCursor(0, TEXTSIZE * 2);
-  display.print("UID:");
-  display.setCursor(0, TEXTSIZE * 3);
-  display.print(ESP.getChipId());
-  display.setCursor(10, TEXTSIZE * 4);
+  display.setCursor(10, TEXTSIZE * 2);
   display.setTextColor(BLACK);
   display.print("<- BACK");
 
   handleCursor(input, 1);
-  drawSelector(cursorLocation, TEXTSIZE * 4);
+  drawSelector(cursorLocation, TEXTSIZE * 2);
 
   if (input == LONGCLICK) {
     goToMenu(MAINMENU);
@@ -153,18 +149,26 @@ void ledMenu(uint8_t input) {
   if (input == LONGCLICK) {
     if (cursorLocation == 0) {
       if (millis() > ledTimer + SCROLLSPEED * 3) {
+        if (ledBrightness == 250 || ledBrightness == 255) {
+          ledTimer = millis() + 500;
+        } else {
+          ledTimer = millis();
+        }
         ledBrightness += 5;
         ledBrightness %= 260;
-        ledTimer = millis();
       }
     } else if (cursorLocation == 1) {
       sightLedOn = !sightLedOn;
       resetButton();
     } else if (cursorLocation == 2) {
       if (millis() > ledTimer + SCROLLSPEED * 3) {
+        if (backLightBrightness == 250 || backLightBrightness == 255) {
+          ledTimer = millis() + 500;
+        } else {
+          ledTimer = millis();
+        }
         backLightBrightness += 5;
         backLightBrightness %= 260;
-        ledTimer = millis();
       }
     } else if (cursorLocation == 3) {
       backLightOn = !backLightOn;
@@ -285,17 +289,13 @@ void leaveMenu() {
   resetButton();
   menu = false;
 }
-long startUpTimer = 0;
-#define DEFAULTTIME 5
 void startUpMenu() {
-  int timeLeft = DEFAULTTIME;
-  startUpTimer = toSeconds() + DEFAULTTIME;
   boolean noChoice = true;
-  int currentChoice = 1;
+  int currentChoice = 0;
   int yHeight = TEXTSIZE * 3 - 1;
-  while (timeLeft > 0 && noChoice) {
+  startTimer(0, 5);
+  while (getTimeLeft() > 0) {
     int input = getPress();
-    timeLeft = startUpTimer - toSeconds();
 
     if (input == SINGLECLICK) {
       currentChoice ++;
@@ -306,9 +306,11 @@ void startUpMenu() {
     }
     display.clearDisplay();
     display.setCursor(0, TEXTSIZE * 1);
-    display.println("CONNECT TO SERVER?");
+    display.println("CONNECT TO");
+    display.setCursor(0, TEXTSIZE * 2);
+    display.println("SERVER?");
     if (currentChoice == 0) {
-      display.fillRect(20, yHeight, 17, 10, 100);
+      display.fillRect(20, yHeight, 19, 10, 100);
       display.setCursor(21, TEXTSIZE * 3);
       display.setTextColor(WHITE);
       display.print("YES");
@@ -321,14 +323,14 @@ void startUpMenu() {
       display.setTextColor(BLACK);
       display.print("YES");
       //46
-      display.fillRect(46, yHeight, 17, 10, 100);
-      display.setCursor(48, TEXTSIZE * 3);
+      display.fillRect(46, yHeight, 19, 10, 100);
+      display.setCursor(50, TEXTSIZE * 3);
       display.setTextColor(WHITE);
       display.print("NO");
     }
     display.setTextColor(BLACK);
-    display.setCursor(40, TEXTSIZE * 5);
-    display.println(timeLeft);
+    display.setCursor(27, TEXTSIZE * 4);
+    display.println(timeLeft());
 
     delay(50);
     display.display();
@@ -342,3 +344,4 @@ void startUpMenu() {
 long toSeconds() {
   return long(millis() / 1000);
 }
+
