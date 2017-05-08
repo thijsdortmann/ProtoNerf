@@ -21,8 +21,12 @@ nsp.on('connection', function(socket) {
         if(data == process.env.ADMIN_PASS) {
             socket.emit('players', generatePlayersList());
 
-            socket.on('prepareTTT', function() {
-                game.prepareTTT();
+            socket.on('startTTT', function() {
+                game.startTTT();
+            });
+
+            socket.on('startCapture', function() {
+                game.startCapture();
             });
 
             socket.on('startGame', function() {
@@ -40,6 +44,10 @@ module.exports.log = function(message) {
     nsp.emit('log', message);
 };
 
+module.exports.setTime = function(time) {
+    nsp.emit('timer', str_pad_left(Math.floor(time / 60),'0',2)+':'+str_pad_left((time - (Math.floor(time / 60) * 60)),'0',2));
+};
+
 function generatePlayersList() {
     const playersWeb = [];
 
@@ -47,9 +55,13 @@ function generatePlayersList() {
         playersWeb.push({
             'name' : guns.players[i].name,
             'role' : guns.players[i].role,
-            'teamColor' : guns.players.teamcolor
+            'teamColor' : guns.players[i].teamcolor
         });
     }
 
     return playersWeb;
+}
+
+function str_pad_left(string,pad,length) {
+    return (new Array(length+1).join(pad)+string).slice(-length);
 }

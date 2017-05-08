@@ -33,20 +33,20 @@
         <div class="col-md-3">
             <div class="panel panel-default">
                 <div class="panel-heading">
-                    <h3 class="panel-title">Panel title</h3>
+                    <h3 class="panel-title">Game actions</h3>
                 </div>
                 <div class="panel-body">
-                    <button id="prepareTTT">Prepare TTT</button> <button id="startGame">Prepare TTT</button>
+                    <button id="startTTT">Start TTT</button> <button id="startCapture">Start Capture the Flag</button> <button id="startGame">Start game</button>
                 </div>
             </div>
         </div>
         <div class="col-md-3">
             <div class="panel panel-default">
                 <div class="panel-heading">
-                    <h3 class="panel-title">Log</h3>
+                    <h3 class="panel-title">Timer</h3>
                 </div>
-                <div class="panel-body" id="log" style="max-height: 400px; overflow: auto;">
-
+                <div class="panel-body">
+                    <h2 id="timer">00:00</h2>
                 </div>
             </div>
         </div>
@@ -64,9 +64,12 @@
         socket.on('players', function(players) {
             $('#players').html('');
 
-            for(let i = 0; i < players.length; i++){
-                $('#players').append("<tr><td>" + players[i].name + "</td>" +
-                    "<td>" + players[i].role + "</td></tr>");
+            if(players.length > 0) {
+                for(let i = 0; i < players.length; i++){
+                    console.log(players[i]);
+                    $('#players').append("<tr><td style='color: rgb(" + players[i].teamColor.substring(0, 3) + "," + players[i].teamColor.substring(3, 6) + "," + players[i].teamColor.substring(6, 9) + ")'>" + players[i].name + "</td>" +
+                        "<td>" + players[i].role + "</td></tr>");
+                }
             }
 
         });
@@ -75,9 +78,18 @@
             $('#log').prepend(data + '<br>');
         });
 
-        $('#prepareTTT').click(function(e) {
+        socket.on('timer', function(data) {
+            $('#timer').html(data);
+        });
+
+        $('#startTTT').click(function(e) {
             e.preventDefault();
-            socket.emit('prepareTTT');
+            socket.emit('startTTT');
+        });
+
+        $('#startCapture').click(function(e) {
+            e.preventDefault();
+            socket.emit('startCapture');
         });
 
         $('#startGame').click(function(e) {
