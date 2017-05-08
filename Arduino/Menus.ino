@@ -209,14 +209,18 @@ void colorMenu(uint8_t input) {
   if (input == LONGCLICK) {
     if (cursorLocation < 3) {
       if (millis() > colorTimer + SCROLLSPEED) {
+        if (ledStripColor[cursorLocation] + 1 == 256 || ledStripColor[cursorLocation] == 254) {
+          colorTimer = millis() + 500;
+        } else {
+          colorTimer = millis();
+        }
         ledStripColor[cursorLocation]++;
         ledStripColor[cursorLocation] %= 256;
-        colorTimer = millis();
         updateStrip();
       }
     }  else if (cursorLocation < 4) {
       if (millis() > colorTimer + SCROLLSPEED) {
-        if (GENERALBRIGHTNESS + 1 == MAXBRIGHTNESS) {
+        if (GENERALBRIGHTNESS + 1 == MAXBRIGHTNESS || GENERALBRIGHTNESS == MAXBRIGHTNESS - 2) {
           GENERALBRIGHTNESS ++;
           GENERALBRIGHTNESS %= MAXBRIGHTNESS;
           colorTimer = millis() + 500;
