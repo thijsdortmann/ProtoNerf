@@ -5,26 +5,28 @@
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css" integrity="sha384-rHyoN1iRsVXV4nD0JutlnGaslCJuC7uwjduW9SVrLvRYooPp2bWYgmgJQIXwl/Sp" crossorigin="anonymous">
 
+    <script src="static/jquery-3.2.1.min.js"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
-    <script src="jquery-3.2.1.min.js"></script>
-    <script src="socket.io.min.js"></script>
+    <script src="static/socket.io.min.js"></script>
 </head>
 
 <body>
 
 <div class="container">
     <div class="page-header">
-        <h1>ProtoNerf <small>Brought to you by Activity Committee Extraordinaire</small></h1>
+        <h1>ProtoNerf <small>Admin Dashboard</small></h1>
     </div>
 
     <div class="row">
-        <div class="col-md-3">
+        <div class="col-md-6">
             <div class="panel panel-default">
                 <div class="panel-heading">
                     <h3 class="panel-title">Players</h3>
                 </div>
                 <div class="panel-body">
-                    Panel content
+                    <table class="table" id="players">
+
+                    </table>
                 </div>
             </div>
         </div>
@@ -34,27 +36,17 @@
                     <h3 class="panel-title">Panel title</h3>
                 </div>
                 <div class="panel-body">
-                    Panel content
+                    <button id="prepareTTT">Prepare TTT</button> <button id="startGame">Prepare TTT</button>
                 </div>
             </div>
         </div>
         <div class="col-md-3">
             <div class="panel panel-default">
                 <div class="panel-heading">
-                    <h3 class="panel-title">Panel title</h3>
+                    <h3 class="panel-title">Log</h3>
                 </div>
-                <div class="panel-body">
-                    Panel content
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="panel panel-default">
-                <div class="panel-heading">
-                    <h3 class="panel-title">Panel title</h3>
-                </div>
-                <div class="panel-body">
-                    Panel content
+                <div class="panel-body" id="log" style="max-height: 400px; overflow: auto;">
+
                 </div>
             </div>
         </div>
@@ -63,7 +55,35 @@
 
 <script type="text/javascript">
     $(document).ready(function() {
+        var socket = io('/website');
 
+        socket.on('connect', function() {
+            socket.emit('identify', 'AceIsAwesome');
+        });
+
+        socket.on('players', function(players) {
+            $('#players').html('');
+
+            for(let i = 0; i < players.length; i++){
+                $('#players').append("<tr><td>" + players[i].name + "</td>" +
+                    "<td>" + players[i].role + "</td></tr>");
+            }
+
+        });
+
+        socket.on('log', function(data) {
+            $('#log').prepend(data + '<br>');
+        });
+
+        $('#prepareTTT').click(function(e) {
+            e.preventDefault();
+            socket.emit('prepareTTT');
+        });
+
+        $('#startGame').click(function(e) {
+            e.preventDefault();
+            socket.emit('startGame');
+        });
     });
 </script>
 

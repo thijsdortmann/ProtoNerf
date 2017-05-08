@@ -1,6 +1,8 @@
 const server = require('./server');
 const io = server.io;
 const connection = require('./database');
+const website = require('./website');
+const game = require('./game');
 
 const players = [];
 
@@ -20,7 +22,7 @@ module.exports.players = players;
 
 // This callback handles the functions for a connected device.
 io.on('connection', function(socket) {
-    let playerdata = 0;
+    let player = 0;
 
     console.log('client connected');
 
@@ -30,34 +32,66 @@ io.on('connection', function(socket) {
         connection.query('SELECT * FROM guns WHERE `uid` = ?', [uid], function(error, results, fields) {
             if(error) throw error;
             if(results.length > 0) {
-                playerdata = results[0];
-                console.log(uid, 'identified as', playerdata.name);
-                socket.emit('setNickname', playerdata.name);
+                if(results[0].allowed) {
+                    player = results[0];
 
-                playerdata.socket = socket;
+                    player.alive = true;
+                    player.allowReloading = game.allowReloading;
+                    player.allowFiringmode = game.gameState;
+                    player.role = '';
+                    player.teamcolor = '000000000';
 
-                // As the library on the Wemos doesn't like handling multiple emits per cycle
-                // we have to queue the commands and send them a bit slower.
-                // TODO: the command queue is not nicely implemented.
-                playerdata.commandQueue = [];
+                    console.log(uid, 'identified as', player.name);
+                    socket.emit('setNickname', player.name);
 
-                playerdata.queueCommand = function(command, data) {
-                    this.commandQueue.push({
-                        'command' : command,
-                        'data' : data
+                    // As the library on the Wemos doesn't like handling multiple emits per cycle
+                    // we have to queue the commands and send them a bit slower.
+                    // TODO: the command queue is not nicely implemented.
+                    player.commandQueue = [];
+
+                    player.queueCommand = function(command, data) {
+                        this.commandQueue.push({
+                            'command' : command,
+                            'data' : data
+                        });
+                    };
+
+                    player.commandQueueHandler = setInterval(function() {
+                        if(player.commandQueue.length > 0) {
+                            let command = player.commandQueue.shift();
+                            socket.emit(command.command, command.data);
+                        }
+                    }, 100);
+
+                    player.setTeamColor = function(color) {
+                        player.teamcolor = color;
+                        player.queueCommand('setTeamColor', color);
+                    };
+
+                    player.setAllowReloading = function(allowReloading) {
+                        player.allowReloading = allowReloading;
+                        player.queueCommand('allowReloading', allowReloading);
+                    };
+
+                    player.setAllowFiringmode = function(allowFiringmode) {
+                        player.allowFiringmode = allowFiringmode;
+                        player.queueCommand('allowFiringmode', allowFiringmode);
+                    };
+
+                    player.setRole = function(role) {
+                        player.role = role;
+                        player.queueCommand('setRole', role);
+                    };
+
+                    players.push(player);
+                    website.playersUpdate();
+
+                    socket.on('shotFired', function() {
+                        website.log('shot was fired by ' + player.name);
                     });
-                };
-
-                playerdata.commandQueueHandler = setInterval(function() {
-                    if(playerdata.commandQueue.length > 0) {
-                        let command = playerdata.commandQueue.shift();
-                        socket.emit(command.command, command.data);
-                    }
-                }, 100);
-
-                players.push(playerdata);
-                playerdata.queueCommand('allowColorcustomization', 'false');
-                playerdata.queueCommand('setTeamColor', '255255255');
+                }else{
+                    socket.emit('broadcast', 'You\'re currently not allowed to play.');
+                }
             }else{
                 socket.emit('broadcast', 'Please register your gun with UID ' + uid);
             }
@@ -66,9 +100,10 @@ io.on('connection', function(socket) {
 
     socket.on('disconnect', function() {
         console.log('disconnected');
-        if(playerdata) {
-            clearInterval(playerdata.commandQueueHandler);
-            players.splice(players.indexOf(playerdata), 1);
+        if(player) {
+            clearInterval(player.commandQueueHandler);
+            players.splice(players.indexOf(player), 1);
+            website.playersUpdate();
         }
     });
 });

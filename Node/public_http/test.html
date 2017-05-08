@@ -1,1 +1,141 @@
-<h1>Hi there!</h1>
+<!DOCTYPE html>
+<html>
+<head>
+    <!-- Latest compiled and minified CSS -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css" integrity="sha384-rHyoN1iRsVXV4nD0JutlnGaslCJuC7uwjduW9SVrLvRYooPp2bWYgmgJQIXwl/Sp" crossorigin="anonymous">
+
+    <script src="jquery-3.2.1.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+    <script src="socket.io.min.js"></script>
+</head>
+
+<body>
+
+<div class="container">
+    <div class="page-header">
+        <h1>ProtoNerf <small>Test client</small></h1>
+    </div>
+
+    <div class="row">
+        <div class="col-md-6">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h3 class="panel-title">Actions</h3>
+                </div>
+                <div class="panel-body" id="actions">
+                    <table class="table">
+                        <tr>
+                            <th>Action</th>
+                            <th>Do</th>
+                        </tr>
+                        <tr>
+                            <td>ChipID</td>
+                            <td><input value="" id="chipId"></td>
+                        </tr>
+                        <tr>
+                            <td>ChipID</td>
+                            <td><button id="connect">Connect</button></td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h3 class="panel-title">Variables</h3>
+                </div>
+                <div class="panel-body">
+                    <table class="table">
+                        <tr>
+                            <th>Variables</th>
+                            <th>Value</th>
+                        </tr>
+                        <tr>
+                            <td>Name</td>
+                            <td id="name"></td>
+                        </tr>
+                        <tr>
+                            <td>Broadcast</td>
+                            <td id="broadcast"></td>
+                        </tr>
+                        <tr>
+                            <td>Role</td>
+                            <td id="role"></td>
+                        </tr>
+                        <tr>
+                            <td>Timer</td>
+                            <td id="timer"></td>
+                        </tr>
+                        <tr>
+                            <td>AllowColorCustomization</td>
+                            <td id="allowcolor"></td>
+                        </tr>
+                        <tr>
+                            <td>Team color</td>
+                            <td id="teamColor"></td>
+                        </tr>
+                        <tr>
+                            <td>Gamestate</td>
+                            <td id="gamestate"></td>
+                        </tr>
+                        <tr>
+                            <td>Allow reloading</td>
+                            <td id="reloading"></td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script type="text/javascript">
+    $(document).ready(function() {
+        $('#connect').click(function (e) {
+            e.preventDefault();
+
+            var socket = io();
+
+            socket.on('connect', function() {
+                socket.emit('identify', $('#chipId').val());
+            });
+
+            socket.on('setNickname', function(data) {
+                $('#name').html(data);
+            });
+
+            socket.on('setTeamColor', function(data) {
+                $('#teamColor').html(data);
+            });
+
+            socket.on('allowColorcustomization', function(data) {
+                $('#allowcolor').html(data);
+            });
+
+            socket.on('broadcast', function(data) {
+                $('#broadcast').html(data);
+            });
+
+            socket.on('allowReloading', function(data) {
+                $('#reloading').html(data);
+            });
+
+            socket.on('setGameState', function(data) {
+                $('#gamestate').html(data);
+            });
+
+            socket.on('setRole', function(data) {
+                $('#role').html(data);
+            });
+
+            socket.on('startTimer', function(data) {
+                $('#timer').html(data);
+            });
+        });
+    });
+</script>
+
+</body>
+</html>

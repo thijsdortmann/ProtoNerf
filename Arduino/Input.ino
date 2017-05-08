@@ -87,29 +87,30 @@ int getPress() {
 }
 void normalButtonHandler(uint8_t p) {
   if (p == SINGLECLICK) {
-      boolean isReloaded = false;
-      if (millis() < TimeSinceLast + DOUBLECLICKTIME) {
-        //reload the gun if that is possible
-        if (allowReloads()) {
-          reload();
-          TimeSinceLast = millis() - DOUBLECLICKTIME;
-          isReloaded = true;
-        }
-      } else {
-        if (bullets < MAXBULLETS && allowReloads()) {
-          //add a bullet one at a time
+    boolean isReloaded = false;
+    if (millis() < TimeSinceLast + DOUBLECLICKTIME) {
+      //reload the gun if that is possible
+      if (allowReloads()) {
+        reload();
+        TimeSinceLast = millis() - DOUBLECLICKTIME;
+        isReloaded = true;
+      }
+    } else {
+      if (bullets < MAXBULLETS && allowReloads()) {
+        //add a bullet one at a time
         bullets ++;
-        }
+        socket.sendEvent("reloaded", String(bullets));
       }
-      if (!isReloaded) {
-        TimeSinceLast = millis();
-      }
-
-
-    } else if (p == LONGCLICK) {
-      //go to the main menu
-      goToMenu(1);
     }
+    if (!isReloaded) {
+      TimeSinceLast = millis();
+    }
+
+
+  } else if (p == LONGCLICK) {
+    //go to the main menu
+    goToMenu(1);
+  }
 }
 long spamTimer = millis();
 boolean triggerReleased = true;
@@ -117,8 +118,9 @@ void ammoCounter() {
   //display the ammo counter, dunno how yet
   if (buttonPressed(TRIGGERBUTTON) && triggerReleased) {
     if (bullets > 0) {
-    bullets --;
-    shoot();
+      bullets --;
+      socket.sendEvent("shotFired", "...");
+      shoot();
     }
     triggerReleased = false;
   }
@@ -129,6 +131,7 @@ void ammoCounter() {
 
 void reload() {
   bullets = MAXBULLETS;
+  socket.sendEvent("reloaded", String(bullets));
 }
 //relay is stupid, only works if you set the pin as input, otherwise some floating remains :(
 boolean relayState = false;
