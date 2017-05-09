@@ -32,7 +32,7 @@ io.on('connection', function(socket) {
         connection.query('SELECT * FROM guns WHERE `uid` = ?', [uid], function(error, results, fields) {
             if(error) throw error;
             if(results.length > 0) {
-                if(results[0].allowed) {
+                if(results[0].allowed && !game.gameState) {
                     player = results[0];
 
                     player.alive = true;
@@ -40,6 +40,9 @@ io.on('connection', function(socket) {
                     player.allowFiringmode = game.gameState;
                     player.role = '';
                     player.teamcolor = '000000000';
+                    player.bullets = 20;
+                    player.deaths = 0;
+                    player.canRespawn = true;
 
                     console.log(uid, 'identified as', player.name);
                     socket.emit('setNickname', player.name);
@@ -61,7 +64,7 @@ io.on('connection', function(socket) {
                             let command = player.commandQueue.shift();
                             socket.emit(command.command, command.data);
                         }
-                    }, 100);
+                    }, 200);
 
                     player.setTeamColor = function(color) {
                         player.teamcolor = color;
@@ -83,14 +86,35 @@ io.on('connection', function(socket) {
                         player.queueCommand('setRole', role);
                     };
 
-                    players.push(player);
-                    website.playersUpdate();
+                    player.isKilled = function() {
+                        console.log('player', player.name, 'has been killed');
+                        player.queueCommand('broadcast', 'Your death has been registered.');
+                        player.alive = false;
+                        player.deaths++;
+                        player.setAllowFiringmode('false');
+                        if(player.canRespawn) {
+                            setTimeout(function() {
+                                player.alive = true;
+                                player.setAllowFiringmode('true');
+                                player.queueCommand('broadcast', 'You are alive again.');
+                            }, 10000);
+                        }
+                    };
 
-                    socket.on('shotFired', function() {
+                    players.push(player);
+                    //website.playersUpdate();
+
+                    socket.on('shotFired', function(bullets) {
+                        player.bullets = bullets;
                         website.log('shot was fired by ' + player.name);
                     });
+
+                    socket.on('reloaded', function(bullets) {
+                        player.bullets = bullets;
+                        website.log('gun was reloaded by ' + player.name);
+                    });
                 }else{
-                    socket.emit('broadcast', 'You\'re currently not allowed to play.');
+                    socket.emit('broadcast', 'You\'re currently not allowed to join.');
                 }
             }else{
                 socket.emit('broadcast', 'Please register your gun with UID ' + uid);

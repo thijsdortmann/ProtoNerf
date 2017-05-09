@@ -119,7 +119,7 @@ void ammoCounter() {
   if (buttonPressed(TRIGGERBUTTON) && triggerReleased) {
     if (bullets > 0) {
       bullets --;
-      socket.sendEvent("shotFired", "...");
+      socket.sendEvent("shotFired", String(bullets));
       shoot();
     }
     triggerReleased = false;

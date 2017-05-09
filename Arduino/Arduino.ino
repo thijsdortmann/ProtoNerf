@@ -148,7 +148,6 @@ Thread* thread_displayHandler;
 ThreadController threadController;
 
 void setup() {
-  Serial.begin(115200);
   delay(10);
 
   brightnessAdress = colorAdress + 5;
@@ -157,8 +156,6 @@ void setup() {
   EEPROMHandler();
   //pinMode(TRIGGERBUTTON, INPUT_PULLUP);
   //pinMode(LOGICBUTTON, INPUT_PULLUP);
-
-  Serial.println("");
 
   //Seting up basic values
   setTimer(false); //is there a timer?

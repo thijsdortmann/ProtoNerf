@@ -12,6 +12,9 @@ module.exports.prepareCapture = function() {
         guns.players[i].queueCommand('allowColorcustomization', 'false');
         guns.players[i].setTeamColor('255000000');
         guns.players[i].setRole('TEAM 1');
+        guns.players[i].setAllowReloading('true');
+        guns.players[i].setAllowFiringmode('true');
+        guns.players[i].canRespawn = true;
     }
 
     for(let i = team1.length; i < guns.players.length; i++) {
@@ -19,9 +22,11 @@ module.exports.prepareCapture = function() {
         guns.players[i].queueCommand('allowColorcustomization', 'false');
         guns.players[i].setTeamColor('000000255');
         guns.players[i].setRole('TEAM 2');
+        guns.players[i].setAllowReloading('true');
+        guns.players[i].setAllowFiringmode('true');
+        guns.players[i].canRespawn = true;
     }
 
-    website.playersUpdate();
 };
 
 /**

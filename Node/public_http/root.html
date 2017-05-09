@@ -64,13 +64,19 @@
         socket.on('players', function(players) {
             $('#players').html('');
 
+            $('#players').append('<tr><th>Name</th><th>Role</th><th>Bullets</th><th>Deaths</th><th>Actions</th>')
+
             if(players.length > 0) {
                 for(let i = 0; i < players.length; i++){
-                    console.log(players[i]);
+                    //console.log(players[i]);
                     $('#players').append("<tr><td style='color: rgb(" + players[i].teamColor.substring(0, 3) + "," + players[i].teamColor.substring(3, 6) + "," + players[i].teamColor.substring(6, 9) + ")'>" + players[i].name + "</td>" +
-                        "<td>" + players[i].role + "</td></tr>");
+                        "<td>" + players[i].role + "</td><td>" + players[i].bullets + "</td><td>" + players[i].deaths + "</td><td><button class='registerKill' rel='" + players[i].index + "'>Killed</button></td></tr>");
                 }
             }
+
+            $('.registerKill').click(function(e) {
+                socket.emit('registerKill', $(this).attr('rel'));
+            });
 
         });
 

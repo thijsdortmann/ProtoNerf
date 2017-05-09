@@ -32,6 +32,10 @@ nsp.on('connection', function(socket) {
             socket.on('startGame', function() {
                 game.startGame();
             });
+
+            socket.on('registerKill', function(index) {
+                guns.players[index].isKilled();
+            });
         }
     });
 });
@@ -39,6 +43,8 @@ nsp.on('connection', function(socket) {
 module.exports.playersUpdate = function() {
     nsp.emit('players', generatePlayersList());
 };
+
+setInterval(module.exports.playersUpdate, 500);
 
 module.exports.log = function(message) {
     nsp.emit('log', message);
@@ -53,9 +59,13 @@ function generatePlayersList() {
 
     for (let i=0; i < guns.players.length; i++) {
         playersWeb.push({
+            'index': i,
             'name' : guns.players[i].name,
             'role' : guns.players[i].role,
-            'teamColor' : guns.players[i].teamcolor
+            'teamColor' : guns.players[i].teamcolor,
+            'bullets' : guns.players[i].bullets,
+            'deaths' : guns.players[i].deaths,
+            'alive' : guns.players[i].alive
         });
     }
 

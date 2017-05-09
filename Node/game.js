@@ -20,6 +20,7 @@ module.exports.startTTT = function() {
         }, function() {
             guns.queueCommandForAll('setGameState', 'false');
         });
+    guns.queueCommandForAll('startTimer', '1000');
 };
 
 module.exports.startCapture = function() {
@@ -31,12 +32,14 @@ module.exports.startCapture = function() {
         }, function() {
             guns.queueCommandForAll('setGameState', 'false');
         });
+    guns.queueCommandForAll('startTimer', '1000');
 };
 
 let gameTimer = 0;
 let gameTimerInterval;
 
 module.exports.startGameTimer = function(seconds, interval, callback) {
+    clearInterval(gameTimerInterval);
     gameTimer = seconds;
     gameTimerInterval = setInterval(function() {
         gameTimer--;
