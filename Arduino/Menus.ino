@@ -306,6 +306,7 @@ void startUpMenu() {
       currentChoice %= 2;
     } else if (input == LONGCLICK) {
       noChoice = false;
+      resetButton();
       break;
     }
     display.clearDisplay();

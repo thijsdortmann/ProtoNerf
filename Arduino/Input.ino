@@ -117,7 +117,7 @@ boolean triggerReleased = true;
 void ammoCounter() {
   //display the ammo counter, dunno how yet
   if (buttonPressed(TRIGGERBUTTON) && triggerReleased) {
-    if (bullets > 0) {
+    if (bullets > 0 && shootingMode()) {
       bullets --;
       socket.sendEvent("shotFired", String(bullets));
       shoot();
