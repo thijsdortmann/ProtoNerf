@@ -14,25 +14,25 @@ module.exports.startGame = function() {
 module.exports.startTTT = function() {
     ttt.prepareTTT();
     module.exports.startGame();
-    module.exports.startGameTimer(600,
+    module.exports.startGameTimer(900,
         function(timer) {
             website.setTime(timer);
         }, function() {
             guns.queueCommandForAll('setGameState', 'false');
         });
-    guns.queueCommandForAll('startTimer', '1000');
+    guns.queueCommandForAll('startTimer', '1500');
 };
 
 module.exports.startCapture = function() {
     captureFlag.prepareCapture();
     module.exports.startGame();
-    module.exports.startGameTimer(600,
+    module.exports.startGameTimer(900,
         function(timer) {
             website.setTime(timer);
         }, function() {
             guns.queueCommandForAll('setGameState', 'false');
         });
-    guns.queueCommandForAll('startTimer', '1000');
+    guns.queueCommandForAll('startTimer', '1500');
 };
 
 let gameTimer = 0;

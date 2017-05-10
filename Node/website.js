@@ -15,6 +15,10 @@ app.get('/', function(req, res) {
     res.sendFile(__dirname + '/public_http/root.html');
 });
 
+app.get('/playerData', function(req, res) {
+    res.send(ConvertToCSV(JSON.stringify(generatePlayersList())));
+});
+
 nsp.on('connection', function(socket) {
     console.log('website client connected');
     socket.on('identify', function(data) {
@@ -35,6 +39,10 @@ nsp.on('connection', function(socket) {
 
             socket.on('registerKill', function(index) {
                 guns.players[index].isKilled();
+            });
+
+            socket.on('kick', function(index) {
+                guns.players[index].kick();
             });
         }
     });
@@ -74,4 +82,25 @@ function generatePlayersList() {
 
 function str_pad_left(string,pad,length) {
     return (new Array(length+1).join(pad)+string).slice(-length);
+}
+
+
+
+// JSON to CSV Converter
+function ConvertToCSV(objArray) {
+    var array = typeof objArray != 'object' ? JSON.parse(objArray) : objArray;
+    var str = '';
+
+    for (var i = 0; i < array.length; i++) {
+        var line = '';
+        for (var index in array[i]) {
+            if (line != '') line += ','
+
+            line += array[i][index];
+        }
+
+        str += line + '\r\n';
+    }
+
+    return str;
 }

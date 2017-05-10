@@ -101,6 +101,11 @@ io.on('connection', function(socket) {
                         }
                     };
 
+                    player.kick = function() {
+                        console.log('kicking');
+                        socket.disconnect();
+                    };
+
                     players.push(player);
                     //website.playersUpdate();
 
