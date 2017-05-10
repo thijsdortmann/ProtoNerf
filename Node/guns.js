@@ -45,7 +45,10 @@ io.on('connection', function(socket) {
                     player.canRespawn = true;
 
                     console.log(uid, 'identified as', player.name);
-                    socket.emit('setNickname', player.name);
+
+                    player.queueCommand('setNickname', player.name);
+
+                    player.setAllowFiringmode(player.allowFiringmode);
 
                     // As the library on the Wemos doesn't like handling multiple emits per cycle
                     // we have to queue the commands and send them a bit slower.
