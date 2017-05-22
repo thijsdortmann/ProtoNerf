@@ -300,6 +300,7 @@ void startUpMenu() {
   startTimer(0, 5);
   while (getTimeLeft() > 0) {
     int input = getPress();
+//    showLoadingAnimation();
 
     if (input == SINGLECLICK) {
       currentChoice ++;
@@ -345,6 +346,10 @@ void startUpMenu() {
   } else {
     shouldConnect(currentChoice == 0 ? true : false);
   }
+  for(int i = 0; i < LEDSTRIPLENGTH; i++) {
+    setBrightness(i, GENERALBRIGHTNESS);
+  }
+  showStrip();
 }
 long toSeconds() {
   return long(millis() / 1000);

@@ -3,7 +3,7 @@
    (c) 2017 Study Association Proto
    www.proto.utwente.nl
 */
-#define normalSwitch false
+#define normalSwitch NORMALSWITCH
 
 #define ESP8266
 
@@ -19,7 +19,7 @@
 #include <EEPROM.h>
 
 #include <ESP8266WiFi.h>
-#include "WifiConfig.h"
+#include "User_Variables.h"
 
 #include "SocketIOClient.h"
 
@@ -43,7 +43,7 @@ char server[] = "130.89.190.27";
 int port = 3000;
 
 // Nickname for this player, used when gun is offline
-String nickname = "";
+String nickname = NICKNAME;
 
 // ---
 // End of user configuration
@@ -75,8 +75,8 @@ String nickname = "";
 #define SCROLLSPEED       50
 
 // GUN PARAMETERS
-#define MAXBULLETS        20
-#define LEDSTRIPLENGTH    10
+int MAXBULLETS = MAXCAPACITY;
+#define LEDSTRIPLENGTH STRIPLENGTH
 
 #define NUMFLAKES 10
 #define XPOS      0
@@ -149,6 +149,7 @@ Thread* thread_displayHandler;
 ThreadController threadController;
 
 void setup() {
+ // server = SERVERIP;
   delay(10);
 
   brightnessAdress = colorAdress + 5;
@@ -172,6 +173,10 @@ void setup() {
   Serial.println("Initializing LED strip");
   ledStrip.begin();
   initializeStrip();
+  //start it off as being completely dark
+  for (int i = 0; i < LEDSTRIPLENGTH; i++) {
+    ledStrip.setPixelColor(i, 0, 0, 0);
+  }
 
   Serial.println("Initializing screen.");
 
