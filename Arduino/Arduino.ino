@@ -39,7 +39,7 @@ const char* ssid = WIFI_SSID;
 const char* password = WIFI_PASSWORD;
 
 // Server address and port
-char server[] = "130.89.190.27";
+//char server[] = "130.89.190.27";
 int port = 3000;
 
 // Nickname for this player, used when gun is offline
