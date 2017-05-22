@@ -3,6 +3,7 @@
    (c) 2017 Study Association Proto
    www.proto.utwente.nl
 */
+#define normalSwitch false
 
 #define ESP8266
 

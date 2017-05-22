@@ -116,15 +116,15 @@ long spamTimer = millis();
 boolean triggerReleased = true;
 void ammoCounter() {
   //display the ammo counter, dunno how yet
-  if (buttonPressed(TRIGGERBUTTON) && triggerReleased) {
-    if (bullets > 0 && shootingMode()) {
+  if (buttonPressed(TRIGGERBUTTON) == normalSwitch && triggerReleased) {
+    if (bullets > 0 && getFiringMode()) {
       bullets --;
       socket.sendEvent("shotFired", String(bullets));
       shoot();
     }
     triggerReleased = false;
   }
-  if (!buttonPressed(TRIGGERBUTTON) && !triggerReleased ) {
+  if (buttonPressed(TRIGGERBUTTON) != normalSwitch && !triggerReleased ) {
     triggerReleased = true;
   }
 }
