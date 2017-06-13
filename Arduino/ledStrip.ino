@@ -140,3 +140,25 @@ uint32_t Wheel(byte WheelPos) {
   WheelPos -= 170;
   return ledStrip.Color(WheelPos * 3, 255 - WheelPos * 3, 0);
 }
+
+long loadingTimer = millis();
+#define DELAY 5
+int start = 0;
+int localBrightness = 0;
+float BRG = 0;
+float CNT = 0;
+float MLT = 2;
+void showLoadingAnimation() {
+ if (millis() > loadingTimer + DELAY) {
+  CNT += 0.011111f;
+  BRG += sin(CNT) * MLT;
+  localBrightness = int(BRG);
+  //do something 
+  for (int i = 0; i < 10; i++) {
+    setBrightness(i, localBrightness);
+    showStrip();
+  }
+  loadingTimer += DELAY;
+ }
+}
+
