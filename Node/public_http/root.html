@@ -46,7 +46,9 @@
                     <h3 class="panel-title">Game actions</h3>
                 </div>
                 <div class="panel-body">
-                    <button id="startTTT">Start TTT</button> <button id="startCapture">Start Capture the Flag / TDM</button> <button id="startGame">Start game</button>
+                    <button id="startTTT">Start TTT</button> <button id="startCapture">Start Capture the Flag / TDM</button> <button id="startGame">Start game</button><br />
+                    <button id="startED">Start ED</button><br />
+                    <button id="green">Green</button> <button id="red">Red</button> <button id="blue">Blue</button>
                 </div>
             </div>
         </div>
@@ -105,6 +107,26 @@
         $('#startGame').click(function(e) {
             e.preventDefault();
             socket.emit('startGame');
+        });
+
+        $('#startED').click(function(e) {
+            e.preventDefault();
+            socket.emit('startED');
+        });
+
+        $('#green').click(function(e) {
+            e.preventDefault();
+            socket.emit('color', '000255000');
+        });
+
+        $('#red').click(function(e) {
+            e.preventDefault();
+            socket.emit('color', '255000000');
+        });
+
+        $('#blue').click(function(e) {
+            e.preventDefault();
+            socket.emit('color', '000000255');
         });
     });
 </script>

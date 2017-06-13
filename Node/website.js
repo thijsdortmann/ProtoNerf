@@ -33,8 +33,18 @@ nsp.on('connection', function(socket) {
                 game.startCapture();
             });
 
+            socket.on('startED', function() {
+                game.startED();
+            });
+
             socket.on('startGame', function() {
                 game.startGame();
+            });
+
+            socket.on('color', function(data) {
+                for(let i = 0; i < guns.players.length; i++) {
+                    guns.players[i].setTeamColor(data);
+                }
             });
 
             socket.on('registerKill', function(index) {

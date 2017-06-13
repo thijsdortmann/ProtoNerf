@@ -1,6 +1,7 @@
 const guns = require('./guns');
 const ttt = require('./ttt');
 const captureFlag = require('./capture-flag');
+const ED = require('./ed');
 const website = require('./website');
 
 module.exports.gameState = false;
@@ -33,6 +34,18 @@ module.exports.startCapture = function() {
             guns.queueCommandForAll('setGameState', 'false');
         });
     guns.queueCommandForAll('startTimer', '1500');
+};
+
+module.exports.startED = function() {
+    ED.prepareED();
+    module.exports.startGame();
+    module.exports.startGameTimer(90,
+        function(timer) {
+            website.setTime(timer);
+        }, function() {
+            guns.queueCommandForAll('setGameState', 'false');
+        });
+    guns.queueCommandForAll('startTimer', '0130');
 };
 
 let gameTimer = 0;
